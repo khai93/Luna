@@ -2,16 +2,17 @@ import express, { Application } from 'express';
 import fs from 'fs';
 import watch from 'node-watch';
 
-import { IServiceModule } from './modules/services';
+import { ServiceModule } from './modules/services';
 import { ServiceInfo, ServiceInfoValue } from '../common/serviceInfo';
 import { getServiceInfoFiles, getServiceInfoFilesPaths, getServiceInfoFromFile } from './services';
+import { Name } from '../common/name';
 
 export class ApiGatewayServer {
     private _app: Application;
     private _port: number;
-    private _serviceModule: IServiceModule;
+    private _serviceModule: ServiceModule;
 
-    constructor(app: Application, port: number, serviceModule: IServiceModule) {
+    constructor(app: Application, port: number, serviceModule: ServiceModule) {
         this._app = app;
         this._port = port;
         this._serviceModule = serviceModule;
@@ -41,11 +42,9 @@ export class ApiGatewayServer {
                 const serviceNamesFound = name?.match(serviceNameRegex);
 
                 if (serviceNamesFound && serviceNamesFound.length > 0) {
-                    await this._serviceModule.remove(serviceNamesFound[0]);
+                    await this._serviceModule.remove(new Name(serviceNamesFound[0]));
                 }
             }
-
-            console.log(this._serviceModule.services);
         }); 
 
         console.log("Watching src/services for changes");

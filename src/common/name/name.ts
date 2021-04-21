@@ -19,5 +19,9 @@ export class Name {
         }
     }
 
-    isValid = (): boolean => this._value && this._value.length > 0;
+    isValid = (): boolean => this._value.length > 0;
+
+    get value(): string {
+        return this._value;
+    } 
 }
