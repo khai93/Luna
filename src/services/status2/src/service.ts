@@ -8,7 +8,7 @@ const serviceConfig = JSON.parse(fsSync.readFileSync("service.json", "utf8"));
 
 const app = express();
 const host = process.env.HOST || '127.0.0.1';
-const PORT = process.env.PORT || 4520;
+const PORT = process.env.PORT || 4523;
 
 type Address = {
     address: string,

@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
-import { ServiceInfo } from '../../common/serviceInfo/';
-import { Name } from '../../common/name';
+import { ServiceInfo } from '../../../common/serviceInfo';
+import { Name } from '../../../common/name';
 import TypedEmitter from "typed-emitter"
 
 export class ServiceModuleUpdateError extends Error {
@@ -61,7 +61,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     remove(serviceName: Name): Promise<void> {
         return new Promise((resolve, reject) => {
-            const serviceIndex = this._services.findIndex(service => service.value.name == serviceName.value);
+            const serviceIndex = this._services.findIndex(service => service.value.name.value == serviceName.value);
 
             if (serviceIndex) {
                 delete this._services[serviceIndex];
