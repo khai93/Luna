@@ -17,9 +17,9 @@
     "express": "^4.17.1",
     "express-http-proxy": "^1.6.2",
     "glob": "^7.1.6",
-    "inversify": "^5.0.5",
     "node-watch": "^0.7.1",
     "reflect-metadata": "^0.1.13",
+    "tsyringe": "^4.5.0",
     "typescript": "^4.2.4"
   },
   "devDependencies": {

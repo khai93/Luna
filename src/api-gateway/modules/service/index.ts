@@ -1,5 +1,5 @@
-import { MemoryServiceModule } from './service';
+import { MemoryServiceModule } from './memoryModule';
 
-const serviceModule = new MemoryServiceModule();
+const serviceModule = MemoryServiceModule;
 
 export default serviceModule;

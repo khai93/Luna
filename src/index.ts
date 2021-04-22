@@ -1,23 +1,9 @@
-import { ApiGatewayServer } from "./api-gateway/server";
+import 'reflect-metadata';
+import { container } from './api-gateway/di';
 import { ApiGatewayProxy } from './api-gateway/proxy';
-import express from 'express';
-import serviceModule from './api-gateway/modules/service/';
-import expressHttpProxy from 'express-http-proxy';
-import offlineMiddleware from './api-gateway/middlewares/offline';
-const app = express();
+import { ApiGatewayServer } from './api-gateway/server';
 
-const gatewayServer = new ApiGatewayServer({
-    app,
-    port: 8080,
-    serviceModule
-});
+const gatewayServerInstance = container.resolve(ApiGatewayServer);
+gatewayServerInstance.start();
 
-const gatewayProxy = new ApiGatewayProxy({
-    offlineMiddleware,
-    router: express.Router,
-    app,
-    serviceModule,
-    expressHttpProxy
-});
-
-gatewayServer.start();
+const gatewayProxyInstance = container.resolve(ApiGatewayProxy);

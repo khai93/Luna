@@ -1,20 +1,23 @@
 import express, { Application } from 'express';
-import fs from 'fs';
 import watch from 'node-watch';
-
-import { ServiceModule } from './modules/service/service';
 import { ServiceInfo, ServiceInfoValue } from '../common/serviceInfo';
 import { Name } from '../common/name';
+import { injectable, inject, scoped, Lifecycle, singleton } from 'tsyringe';
+import { Configuration } from '../config/config';
+import { ServiceModule } from './modules/service/types';
 
-export type ApiGatewayServerDependencies = {
-    app: Application,
-    port: number,
-    serviceModule: ServiceModule
-}
-
+@singleton()
+@injectable()
 export class ApiGatewayServer {
+    private _expressApp: Application;
 
-    constructor(private dependencies: ApiGatewayServerDependencies) {}
+    constructor(
+        @inject("ExpressDefaultFunction") private express: Function,
+        @inject("Configuration") private configuration: Configuration,
+        @inject("ServiceModule") private serviceModule: ServiceModule
+    ) {
+        this._expressApp = this.express();
+    }
 
     async start() {
         const baseServiceInfoFiles = await ServiceInfo.getServiceInfoFiles();
@@ -23,7 +26,7 @@ export class ApiGatewayServer {
          * Add base files at the start incase there are any services added before the Api Gateway starts up.
          */
         for (const serviceInfo of baseServiceInfoFiles) {
-            await this.dependencies.serviceModule.update(serviceInfo);
+            await this.serviceModule.update(serviceInfo);
         }
 
         watch("src/services", {recursive: true, filter: /service-info\.generated\.json/}, async (evt, name) => {
@@ -32,7 +35,7 @@ export class ApiGatewayServer {
                     const serviceInfo = name && await ServiceInfo.getServiceInfoFromFile(name);
                 
                     if (serviceInfo) {
-                        await this.dependencies.serviceModule.update(serviceInfo);
+                        await this.serviceModule.update(serviceInfo);
                     }                
                 }
             
@@ -41,7 +44,7 @@ export class ApiGatewayServer {
                     const serviceNamesFound = name?.match(serviceNameRegex);
 
                     if (serviceNamesFound && serviceNamesFound.length > 0) {
-                        await this.dependencies.serviceModule.remove(new Name(serviceNamesFound[0]));
+                        await this.serviceModule.remove(new Name(serviceNamesFound[0]));
                     }
                 }
             } catch (e) {
@@ -52,8 +55,12 @@ export class ApiGatewayServer {
         console.log("Watching src/services for changes");
 
 
-        this.dependencies.app.listen(this.dependencies.port, () => {
-            console.log('Api Gateway started at PORT ' + this.dependencies.port);
+        this._expressApp.listen(this.configuration.server.port, () => {
+            console.log('Api Gateway started at PORT ' + this.configuration.server.port);
         });
+    }
+
+    get expressApp(): Application {
+        return this._expressApp;
     }
 }
