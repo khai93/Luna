@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
-import { Name } from "../../../common/name";
-import { ServiceInfo } from "../../../common/serviceInfo";
+import { Name } from "../../common/name";
+import { ServiceInfo } from "../../common/serviceInfo";
 
 export interface ServiceModule extends EventEmitter {
     readonly services: ServiceInfo[];

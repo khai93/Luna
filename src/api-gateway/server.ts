@@ -4,7 +4,7 @@ import { ServiceInfo, ServiceInfoValue } from '../common/serviceInfo';
 import { Name } from '../common/name';
 import { injectable, inject, scoped, Lifecycle, singleton } from 'tsyringe';
 import { Configuration } from '../config/config';
-import { ServiceModule } from './modules/service/types';
+import { ServiceModule } from '../modules/service/types';
 
 @singleton()
 @injectable()
@@ -13,7 +13,7 @@ export class ApiGatewayServer {
 
     constructor(
         @inject("ExpressDefaultFunction") private express: Function,
-        @inject("Configuration") private configuration: Configuration,
+        @inject("ApiGatewayConfig") private apiGatewayConfig: Configuration,
         @inject("ServiceModule") private serviceModule: ServiceModule
     ) {
         this._expressApp = this.express();
@@ -55,8 +55,8 @@ export class ApiGatewayServer {
         console.log("Watching src/services for changes");
 
 
-        this._expressApp.listen(this.configuration.server.port, () => {
-            console.log('Api Gateway started at PORT ' + this.configuration.server.port);
+        this._expressApp.listen(this.apiGatewayConfig.server.port, () => {
+            console.log('Api Gateway started at PORT ' + this.apiGatewayConfig.server.port);
         });
     }
 

@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events';
-import { ServiceInfo } from '../../../common/serviceInfo';
-import { Name } from '../../../common/name';
+import { ServiceInfo } from '../../common/serviceInfo';
+import { Name } from '../../common/name';
 import TypedEmitter from "typed-emitter"
 import { ServiceModule, ServiceModuleRemoveError, ServiceModuleUpdateError, ServiceModuleEvents } from './types';
 

@@ -4,7 +4,7 @@ import { injectable, inject, scoped, Lifecycle } from "tsyringe";
 import Middleware from "../common/middleware";
 import { Name } from "../common/name";
 import { ServiceInfo } from "../common/serviceInfo";
-import { ServiceModule } from "./modules/service/types";
+import { ServiceModule } from "../modules/service/types";
 import { ApiGatewayServer } from "./server";
 
 export type ServiceMethod = {
