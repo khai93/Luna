@@ -4,6 +4,7 @@ import { ServiceModule } from "../modules/service/types";
 import { Configuration } from "../config/config";
 import { IExecuteable } from "../common/interfaces/IExecuteable";
 import { ServiceRegistryRoute } from "./routes/ServiceRegistryRoute";
+import { LoggerModule } from "../modules/logger/types";
 
 
 @singleton()
@@ -18,7 +19,8 @@ export class ServiceRegistryServer {
         @injectAll("ServiceRegistryRoute") private routes: ServiceRegistryRoute[],
         @inject("ExpressBodyParser") private bodyParser: Function,
         @inject("ExpressRouterFunction") private router: Function,
-        @inject("ExpressCORSFunction") private cors: Function
+        @inject("ExpressCORSFunction") private cors: Function,
+        @inject("LoggerModule") private logger: LoggerModule
     ) {
         this._expressApp = this.express();
     }
@@ -36,7 +38,7 @@ export class ServiceRegistryServer {
         this._expressApp.use("/luna", lunaRouter);
 
         this._expressApp.listen(this.serviceRegistryConfig.server.port, () => {
-            console.log('Service Registry started at PORT ' + this.serviceRegistryConfig.server.port);
+            this.logger.log('Service Registry started at PORT ' + this.serviceRegistryConfig.server.port);
         });
     }
 

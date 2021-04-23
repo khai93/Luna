@@ -14,6 +14,9 @@ import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryR
 import ServiceRegistryUpdateRoute from './service-registry/routes/update';
 import cors from 'cors';
 import authMiddleware from './service-registry/middlewares/auth';
+import { LoggerModule } from './modules/logger/types';
+import loggerModule from './modules/logger';
+import ServiceRegistryLunaRoute from './service-registry/routes/luna';
 
 export { container }
 
@@ -21,6 +24,10 @@ export { container }
 
 container.register<ServiceModule>("ServiceModule", {
     useClass: serviceModule
+}, { lifecycle: Lifecycle.ContainerScoped });
+
+container.register<LoggerModule>("LoggerModule", {
+    useClass: loggerModule
 }, { lifecycle: Lifecycle.ContainerScoped });
 
 
@@ -40,6 +47,10 @@ container.register<Middleware>("AuthMiddleware", {
 // ServiceRegistry
 container.register<ServiceRegistryRoute>("ServiceRegistryRoute", {
     useClass: ServiceRegistryUpdateRoute
+});
+
+container.register<ServiceRegistryRoute>("ServiceRegistryRoute", {
+    useClass: ServiceRegistryLunaRoute
 });
 
 

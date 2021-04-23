@@ -15,7 +15,17 @@ export type ServiceInfoValue = {
     description: string,
     version: string,
     https: boolean,
-    host: URL,
+    host: string,
+    port: number,
+    online: boolean
+}
+
+export type ServiceInfoRaw = {
+    name: string,
+    description: string,
+    version: string,
+    https: boolean,
+    host: string,
     port: number,
     online: boolean
 }
@@ -24,11 +34,23 @@ export class ServiceInfo {
     private _value: ServiceInfoValue;
 
     constructor(info: string | ServiceInfoValue) {
+        let obj;
+
         if (typeof(info) === 'string') {
-            this._value = JSON.parse(info);
+            obj = JSON.parse(info) as unknown as ServiceInfoRaw;
         } else {
-            this._value = info;
+            obj = info as unknown as ServiceInfoRaw;
         }
+
+        this._value = {
+            name: new Name(obj.name),
+            description: obj.description,
+            version: obj.version,
+            https: obj.https,
+            host: obj.host,
+            port: obj.port,
+            online: obj.online
+        };
 
         if (!this.isValid) {
             throw new ServiceInfoNotValid("Invalid Service");
@@ -44,48 +66,7 @@ export class ServiceInfo {
      */
     sameAs(comparedServiceInfo: ServiceInfo): boolean {
         // Comparing names because names should be unique between services
-        return comparedServiceInfo.value.name === this._value.name;
-    }
-
-
-    /**
-     * Finds all the generated info files
-     * @returns array of filenames
-     */
-    static getServiceInfoFilesPaths(): Promise<string[]> {
-        return new Promise((resolve,reject) => {
-            glob("**/service-info.generated.json", function (err, files) {
-                if (err) {
-                    return reject(err);
-                }
-                
-                return resolve(files);
-            });
-        });
-    }
-
-    static getServiceInfoFromFile(path: string): Promise<ServiceInfo> {
-        return new Promise(async (resolve, reject) => {
-            fs.readFile(path, "utf8")
-                .then((data) => {
-                    return resolve(new ServiceInfo(data));
-                })
-                .catch(err => reject(err));
-        })
-    }
-
-    static getServiceInfoFiles(): Promise<ServiceInfo[]> {
-        return new Promise(async (resolve, reject) => {
-            const files = await this.getServiceInfoFilesPaths();
-            let serviceInfos = [];
-    
-            for (let file of files) {
-                const serviceInfo = await this.getServiceInfoFromFile(file);
-                serviceInfos.push(serviceInfo);
-            }
-    
-            return resolve(serviceInfos);
-        });
+        return comparedServiceInfo.value.name.value === this._value.name.value;
     }
 
     get value(): ServiceInfoValue {

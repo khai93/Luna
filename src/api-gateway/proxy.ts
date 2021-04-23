@@ -4,6 +4,7 @@ import { injectable, inject, scoped, Lifecycle } from "tsyringe";
 import Middleware from "../common/middleware";
 import { Name } from "../common/name";
 import { ServiceInfo } from "../common/serviceInfo";
+import { LoggerModule } from "../modules/logger/types";
 import { ServiceModule } from "../modules/service/types";
 import { ApiGatewayServer } from "./server";
 
@@ -27,16 +28,17 @@ export class ApiGatewayProxy {
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("OfflineMiddleware") private offlineMiddleware: Middleware,
         @inject("ExpressRouterFunction") private router: Function,
-        @inject("ExpressHttpProxy") private expressHttpProxy: Function
+        @inject("ExpressHttpProxy") private expressHttpProxy: Function,
+        @inject("LoggerModule") private logger: LoggerModule
     ) {
-        console.log("Api Gateway Proxy Started");
+        this.logger.log("Api Gateway Proxy Started");
 
         this._router = this.router();
         this._app = this.apiGatewayServer.expressApp;
 
-        this._app.use("/api", (req, res, next) => { console.log("hi"); this._router(req, res, next)});
+        this._app.use("/api", (req, res, next) => { this._router(req, res, next) });
         this.serviceModule.on('update', (updatedServiceInfo: ServiceInfo, updatedServiceInfoIndex: number) => {
-            console.log(`Service [${updatedServiceInfo.value.name}] updated.`);
+            this.logger.log(`Service [${updatedServiceInfo.value.name.value}] updated.`);
             this.updateServiceProxy(updatedServiceInfo);
         });
     }
@@ -51,7 +53,6 @@ export class ApiGatewayProxy {
             handler: serviceInfo.value.online ? this.expressHttpProxy(serviceEndpoint) : this.offlineMiddleware.value
         };
 
-
         const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.sameAs(serviceInfo));
 
         if (serviceMethodIndexFound >= 0) {
@@ -61,7 +62,7 @@ export class ApiGatewayProxy {
         }
 
         for (const serviceMethod of this._serviceMethods) {
-            this._router.use('/' + serviceMethod.serviceInfo.value.name, serviceMethod.handler);
+            this._router.use('/' + serviceMethod.serviceInfo.value.name.value, serviceMethod.handler);
         }
     }
 }
