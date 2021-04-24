@@ -11,12 +11,12 @@ import expressHttpProxy from 'express-http-proxy';
 import { ApiGatewayProxy } from './api-gateway/proxy';
 import { IExecuteable } from './common/interfaces/IExecuteable';
 import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryRoute';
-import ServiceRegistryUpdateRoute from './service-registry/routes/update';
+import ServiceRegistryUpdateRoute from './service-registry/routes/v1/services';
 import cors from 'cors';
 import authMiddleware from './service-registry/middlewares/auth';
 import { LoggerModule } from './modules/logger/types';
 import loggerModule from './modules/logger';
-import ServiceRegistryLunaRoute from './service-registry/routes/luna';
+import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 
 export { container }
 
