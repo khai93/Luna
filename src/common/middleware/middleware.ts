@@ -1,6 +1,8 @@
 import { RequestHandler } from "express";
+import { IValidatable } from "../interfaces/IValidatable";
+import { IValueObject } from "../interfaces/IValueObject";
 
-export class Middleware {
+export class Middleware implements IValueObject<RequestHandler> {
     private _value: RequestHandler;
 
     constructor(handler: RequestHandler) {

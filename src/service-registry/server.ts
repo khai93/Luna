@@ -5,6 +5,7 @@ import { Configuration } from "../config/config";
 import { IExecuteable } from "../common/interfaces/IExecuteable";
 import { ServiceRegistryRoute } from "./routes/ServiceRegistryRoute";
 import { LoggerModule } from "../modules/logger/types";
+import Version from "../common/version";
 
 
 @singleton()
@@ -26,16 +27,18 @@ export class ServiceRegistryServer {
     }
 
     async start() {
-        const lunaRouter = this.router();
+        const lunaRouterV1 = this.router();
 
         this._expressApp.use(this.cors());
         this._expressApp.use(this.bodyParser());
 
         for(const route of this.routes) {
-            route.execute(lunaRouter);
+            if (route.version.sameAs(1)) {
+                route.execute(lunaRouterV1);
+            }
         }
 
-        this._expressApp.use("/luna", lunaRouter);
+        this._expressApp.use("/luna/v1", lunaRouterV1);
 
         this._expressApp.listen(this.serviceRegistryConfig.server.port, () => {
             this.logger.log('Service Registry started at PORT ' + this.serviceRegistryConfig.server.port);

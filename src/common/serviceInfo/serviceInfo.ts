@@ -1,7 +1,9 @@
 import glob from 'glob';
 import fs from 'fs/promises';
 import { Name } from '../name';
-class ServiceInfoNotValid extends Error {
+import { IValidatable } from '../interfaces/IValidatable';
+import { IValueObject } from '../interfaces/IValueObject';
+export class ServiceInfoNotValid extends Error {
     constructor(message : string) {
         super(message);
 
@@ -30,7 +32,7 @@ export type ServiceInfoRaw = {
     online: boolean
 }
 
-export class ServiceInfo {
+export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue> {
     private _value: ServiceInfoValue;
 
     constructor(info: string | ServiceInfoValue) {
@@ -67,6 +69,21 @@ export class ServiceInfo {
     sameAs(comparedServiceInfo: ServiceInfo): boolean {
         // Comparing names because names should be unique between services
         return comparedServiceInfo.value.name.value === this._value.name.value;
+    }
+
+    /**
+     * @returns An object that is type ServiceInfoValue with its values all being primitive types
+     */
+    raw() {
+        return {
+            name: this._value.name.value,
+            description: this._value.description,
+            version: this._value.version,
+            https: this._value.https,
+            host: this._value.host,
+            port: this._value.port,
+            online: this._value.online
+        } as ServiceInfoRaw;
     }
 
     get value(): ServiceInfoValue {
