@@ -36,7 +36,7 @@ export class Name implements IValidatable, IValueObject<string> {
         } else {
             const nameObj = new Name(name);
 
-            return nameObj.sameAs(name);
+            return nameObj.sameAs(this);
         }
     }
 }
