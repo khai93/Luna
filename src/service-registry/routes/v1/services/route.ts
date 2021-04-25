@@ -49,11 +49,11 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
         });
 
         /**
-         * PATCH /luna/v1/services/:serviceName
+         * PUT /luna/v1/services/:serviceName
          * 
          * Register a service in the database
          */
-         router.patch('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+         router.put('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
                 const { serviceName, bodyServiceInfo } = this.parseRequest(req);
 
