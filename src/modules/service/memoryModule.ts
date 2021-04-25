@@ -21,7 +21,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
                 
                 serviceIndex = this._services.findIndex(service => serviceInfo && service.sameAs(serviceInfo));
                 
-                this.emit("update", serviceInfo, serviceIndex);
+                this.emit("add", serviceInfo);
                 return resolve(this._services[serviceIndex]);
             } else {
                 const error = new ServiceModuleAddError("Attempted to add already existing service '" + serviceInfo.value.name.value + "'");
@@ -46,7 +46,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
             if (serviceInfo) {
                 this._services[serviceIndex] = serviceInfo;
 
-                this.emit("update", serviceInfo, serviceIndex);
+                this.emit("update", serviceInfo);
                 return resolve(serviceInfo);
             } else {
                 const error = new ServiceModuleUpdateError("serviceInfo unexpectedly not truthy");
@@ -59,9 +59,9 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     remove(serviceName: Name): Promise<void> {
         return new Promise((resolve, reject) => {
-            const serviceIndex = this._services.findIndex(service => service.value.name.value == serviceName.value);
+            const serviceIndex = this._services.findIndex(service => service.value.name.sameAs(serviceName));
 
-            if (serviceIndex) {
+            if (serviceIndex !== null) {
                 delete this._services[serviceIndex];
 
                 this.emit("remove", serviceName)
