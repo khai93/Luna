@@ -16,13 +16,13 @@ type Address = {
     port: number
 }
 
+
 app.get("/", (req, res) => {
     res.send({
         name: serviceConfig.name,
         description: serviceConfig.description,
         version: serviceConfig.version,
         status: "OK",
-        online: true,
         modules: [
             {
                 database: {
@@ -46,11 +46,7 @@ app.listen(PORT, () => {
         online: true
     }
 
-    fs.writeFile("service-info.generated.json", JSON.stringify(data), 'utf8')
-        .then(() => {
-            console.log("Generated Service Info File Sucessfully");
-        }) 
-        .catch(e => { console.error(e) });
+    
 });
 
 
