@@ -83,7 +83,7 @@ export class ApiGatewayProxy {
     private removeServiceProxy(serviceName: Name) {
         this._router = this.router();
 
-        const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.value.name.sameAs(serviceName));
+        const serviceMethodIndexFound = this._nonNullServiceMethods().findIndex(method => method.serviceInfo.value.name.sameAs(serviceName));
 
         if (serviceMethodIndexFound >= 0) {
             delete this._serviceMethods[serviceMethodIndexFound];

@@ -71,7 +71,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
                     const lastHeartbeatToNowDifferenceInMS = Date.now() - foundServiceInDatabase.value.last_heartbeat.getTime();
                     
                     if (Math.floor(lastHeartbeatToNowDifferenceInMS/1000) > (this.serviceRegistryConfig.registry?.heartbeat_rate as number)) {
-                        this.logger.warn(`service [${serviceName.value}] was ${lastHeartbeatToNowDifferenceInMS/1000}s late in it's heartbeat`);
+                        this.logger.warn(`service [${serviceName.value}] was ${lastHeartbeatToNowDifferenceInMS - ((this.serviceRegistryConfig.registry?.heartbeat_rate as number) * 1000)}ms late in it's heartbeat`);
                     }
 
                     serviceInfoUpdated = await this.serviceModule.update(_bodyServiceInfo);
