@@ -6,6 +6,7 @@ import { NameNotValid } from "../../../../common/name/name";
 import { ServiceInfo } from "../../../../common/serviceInfo";
 import { ServiceInfoNotValid } from "../../../../common/serviceInfo/serviceInfo";
 import Version from "../../../../common/version";
+import { Configuration } from "../../../../config/config";
 import { LoggerModule } from "../../../../modules/logger/types";
 import { ServiceModule } from "../../../../modules/service/types";
 import { ServiceRegistryRoute } from "../../ServiceRegistryRoute";
@@ -15,7 +16,8 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
     constructor(
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("AuthMiddleware") private authMiddleware: Middleware,
-        @inject("LoggerModule") private logger: LoggerModule
+        @inject("LoggerModule") private logger: LoggerModule,
+        @inject("ServiceRegistryConfig") private serviceRegistryConfig: Configuration
     ) { }
 
     version: Version = new Version(1);
@@ -51,7 +53,9 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
         /**
          * PUT /luna/v1/services/:serviceName
          * 
-         * Register a service in the database
+         * Update a service in the database
+         * 
+         * Updates count as heartbeats.
          */
          router.put('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
@@ -64,9 +68,15 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
                 let serviceInfoUpdated;
 
                 if (foundServiceInDatabase) {
+                    const lastHeartbeatToNowDifferenceInMS = Date.now() - foundServiceInDatabase.value.last_heartbeat.getTime();
+                    
+                    if (Math.floor(lastHeartbeatToNowDifferenceInMS/1000) > (this.serviceRegistryConfig.registry?.heartbeat_rate as number)) {
+                        this.logger.warn(`service [${serviceName.value}] was ${lastHeartbeatToNowDifferenceInMS/1000}s late in it's heartbeat`);
+                    }
+
                     serviceInfoUpdated = await this.serviceModule.update(_bodyServiceInfo);
                 } else {
-                    throw new Error("Service '" + _bodyServiceInfo.raw.name + "' is not registered.");
+                    return res.status(404).json({success:false, message: "Service '" + _bodyServiceInfo.raw.name + "' is not registered."});
                 }
 
                 return res.json({success: true, service: serviceInfoUpdated.raw()});

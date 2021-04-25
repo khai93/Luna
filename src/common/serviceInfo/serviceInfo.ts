@@ -19,6 +19,7 @@ export type ServiceInfoValue = {
     https: boolean,
     host: string,
     port: number,
+    last_heartbeat: Date,
     online: boolean
 }
 
@@ -29,6 +30,7 @@ export type ServiceInfoRaw = {
     https: boolean,
     host: string,
     port: number,
+    last_heartbeat: number,
     online: boolean
 }
 
@@ -51,6 +53,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             https: obj.https,
             host: obj.host,
             port: obj.port,
+            last_heartbeat: new Date(Date.now()),
             online: obj.online
         };
 
@@ -82,6 +85,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             https: this._value.https,
             host: this._value.host,
             port: this._value.port,
+            last_heartbeat: this._value.last_heartbeat.getTime(),
             online: this._value.online
         } as ServiceInfoRaw;
     }

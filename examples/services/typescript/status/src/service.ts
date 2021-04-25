@@ -45,15 +45,37 @@ app.listen(PORT, () => {
         host: host,
         port: PORT,
         online: true
-    }
+    };
 
-    
     registryInstance.post(servicesApiURL.toString(), data)
         .then(() => {
             console.log("Registered status service.");
+
+            startHeartbeats();
         })
         .catch(e => { throw e });
 });
+
+function startHeartbeats() {
+    const data = {
+        name: serviceConfig.name,
+        description: serviceConfig.description,
+        version: serviceConfig.version,
+        https: serviceConfig.https,
+        host: host,
+        port: PORT,
+        online: true
+    };
+
+    setTimeout(() => {
+        registryInstance.put(servicesApiURL.toString(), data)
+        .then(() => {
+            console.log("Sent heartbeat.");
+            startHeartbeats();
+        })
+        .catch(e => { throw e });
+    }, 30000)
+}
 
 
 function exitHandler(e: Error) {

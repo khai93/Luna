@@ -10,6 +10,10 @@ export type Configuration = {
             password: string
         }
     },
+    registry?: {
+        // RATE IN SECONDS
+        heartbeat_rate: number
+    }
 }
 
 export const apiGatewayConfig: Configuration = {
@@ -25,6 +29,9 @@ export const serviceRegistryConfig: Configuration = {
             username: getEnvironmentVariable("SERVICE_REGISTRY_AUTH_USERNAME", false, "") as string,
             password: getEnvironmentVariable("SERVICE_REGISTRY_AUTH_PASSWORD", false, "") as string,
         }
+    },
+    registry: {
+        heartbeat_rate: parseInt(getEnvironmentVariable("SERVICE_REGISTRY_HEARTBEAT_RATE", false, "30") as string)
     }
 }
 
