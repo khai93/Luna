@@ -3,19 +3,19 @@ import fs from 'fs/promises';
 import fsSync from 'fs';
 import http from 'http';
 import { AddressInfo } from 'node:net';
+import axios from 'axios';
 
 const serviceConfig = JSON.parse(fsSync.readFileSync("service.json", "utf8"));
 
 const app = express();
 const host = process.env.HOST || '127.0.0.1';
-const PORT = process.env.PORT || 4523;
+const PORT = process.env.PORT || 4520;
+const registryServerBaseUrl = "http://localhost:3000/";
+const servicesApiURL = new URL("luna/v1/services/" + serviceConfig.name, registryServerBaseUrl);
 
-type Address = {
-    address: string,
-    family: string,
-    port: number
-}
-
+const registryInstance = axios.create({
+    baseURL: registryServerBaseUrl.toString()
+});
 
 app.get("/", (req, res) => {
     res.send({
@@ -23,6 +23,7 @@ app.get("/", (req, res) => {
         description: serviceConfig.description,
         version: serviceConfig.version,
         status: "OK",
+        online: true,
         modules: [
             {
                 database: {
@@ -47,29 +48,24 @@ app.listen(PORT, () => {
     }
 
     
+    registryInstance.post(servicesApiURL.toString(), data)
+        .then(() => {
+            console.log("Registered status service.");
+        })
+        .catch(e => { throw e });
 });
 
 
 function exitHandler(e: Error) {
-    fs.readFile("service-info.generated.json", "utf8")
-        .then((data) => {
-            const json = JSON.parse(data);
-            json.online = false;
-
-            fs.writeFile("service-info.generated.json", JSON.stringify(json), 'utf8')
-                .then(() => {
-                    console.log("Edited service-info.generated.json online status to false");
-                    process.exit();
-                }) 
-                .catch(e => { 
-                    console.error(e)
-                    process.exit();
-                });
+    registryInstance.delete(servicesApiURL.toString())
+        .then(() => {
+            console.log("Deregistered status service.");
+            process.exit();
         })
         .catch(e => {
             console.error(e);
             process.exit();
-        })
+        });
 }
 
 process.on('exit', exitHandler);
