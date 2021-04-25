@@ -24,7 +24,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
         /**
          * POST /luna/v1/services/:serviceName
          * 
-         * Register/Update a service in the database
+         * Register a service in the database
          */
         router.post('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
@@ -37,7 +37,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
                 let serviceInfoAdded;
 
                 if (foundServiceInDatabase) {
-                    serviceInfoAdded = await this.serviceModule.update(_bodyServiceInfo);
+                    throw new Error("Duplicate service id.");
                 } else {
                     serviceInfoAdded = await this.serviceModule.add(_bodyServiceInfo);
                 }
@@ -48,6 +48,61 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
             }
         });
 
+        /**
+         * PUT /luna/v1/services/:serviceName
+         * 
+         * Register a service in the database
+         */
+         router.put('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+            try {
+                const { serviceName, bodyServiceInfo } = this.parseRequest(req);
+
+                const _bodyServiceInfo = bodyServiceInfo as ServiceInfo;
+
+                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+
+                let serviceInfoUpdated;
+
+                if (foundServiceInDatabase) {
+                    serviceInfoUpdated = await this.serviceModule.update(_bodyServiceInfo);
+                } else {
+                    throw new Error("Service '" + _bodyServiceInfo.raw.name + "' is not registered.");
+                }
+
+                return res.json({success: true, service: serviceInfoUpdated.raw()});
+            } catch (e) {
+                this.handleError(e, res);
+            }
+        });
+
+        /**
+         * DELETE /luna/v1/services/:serviceName
+         * 
+         * Delete a service in the database
+         */
+         router.delete('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+            try {
+                const { serviceName } = this.parseRequest(req, false);
+
+                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+
+                if (foundServiceInDatabase !== null) {
+                    await this.serviceModule.remove(serviceName);
+                } else {
+                    throw new Error("Service '" + serviceName.value + "' is not registered.");
+                }
+
+                return res.json({success: true});
+            } catch (e) {
+                this.handleError(e, res);
+            }
+        });
+
+        /**
+         * GET /luna/v1/services/:serviceName
+         * 
+         * Get service's raw info
+         */
         router.get('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
                 const { serviceName } = this.parseRequest(req, false);

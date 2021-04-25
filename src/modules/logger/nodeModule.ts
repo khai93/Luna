@@ -8,6 +8,6 @@ export class NodeModule implements LoggerModule {
         console.warn(message);
     }
     error(error: Error): void {
-        console.error(error);
+        console.error(error.name + ": " + error.message + "\nstack: " + error.stack);
     }
 }

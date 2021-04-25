@@ -20,6 +20,7 @@ export type ServiceMethod = {
 @injectable()
 export class ApiGatewayProxy {
     private _serviceMethods: ServiceMethod[] = [];
+    private _nonNullServiceMethods = (): ServiceMethod[] => this._serviceMethods.filter(method => method !== null);
     private _router: Router;
     private _app: Application;
 
@@ -37,10 +38,22 @@ export class ApiGatewayProxy {
         this._app = this.apiGatewayServer.expressApp;
 
         this._app.use("/api", (req, res, next) => { this._router(req, res, next) });
+        
         this.serviceModule.on('update', (updatedServiceInfo: ServiceInfo, updatedServiceInfoIndex: number) => {
             this.logger.log(`Service [${updatedServiceInfo.value.name.value}] updated.`);
             this.updateServiceProxy(updatedServiceInfo);
         });
+
+        this.serviceModule.on('remove', (removedServiceName: Name) => {
+            this.logger.log(`Service [${removedServiceName.value}] deregistered.`);
+            this.removeServiceProxy(removedServiceName);
+        });
+
+        this.serviceModule.on('add', (addedServiceInfo: ServiceInfo) => {
+            this.logger.log(`Service [${addedServiceInfo.value.name.value}] registered.`);
+            this.updateServiceProxy(addedServiceInfo);
+        });
+
     }
 
     private updateServiceProxy(serviceInfo: ServiceInfo) {
@@ -61,7 +74,22 @@ export class ApiGatewayProxy {
             this._serviceMethods.push(newServiceMethod);
         }
 
-        for (const serviceMethod of this._serviceMethods) {
+
+        for (const serviceMethod of this._nonNullServiceMethods()) {
+            this._router.use('/' + serviceMethod && serviceMethod.serviceInfo.value.name.value, serviceMethod.handler);
+        }
+    }
+
+    private removeServiceProxy(serviceName: Name) {
+        this._router = this.router();
+
+        const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.value.name.sameAs(serviceName));
+
+        if (serviceMethodIndexFound >= 0) {
+            delete this._serviceMethods[serviceMethodIndexFound];
+        }
+
+        for (const serviceMethod of this._nonNullServiceMethods()) {
             this._router.use('/' + serviceMethod.serviceInfo.value.name.value, serviceMethod.handler);
         }
     }
