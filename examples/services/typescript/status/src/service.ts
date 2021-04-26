@@ -51,12 +51,12 @@ app.listen(PORT, () => {
         .then(() => {
             console.log("Registered status service.");
 
-            startHeartbeats();
+            startHeartbeat();
         })
         .catch(e => { throw e });
 });
 
-function startHeartbeats() {
+function startHeartbeat() {
     const data = {
         name: serviceConfig.name,
         description: serviceConfig.description,
@@ -71,7 +71,7 @@ function startHeartbeats() {
         registryInstance.put(servicesApiURL.toString(), data)
         .then(() => {
             console.log("Sent heartbeat.");
-            startHeartbeats();
+            startHeartbeat();
         })
         .catch(e => { throw e });
     }, 30000)
