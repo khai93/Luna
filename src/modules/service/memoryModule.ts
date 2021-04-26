@@ -15,12 +15,12 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     add(serviceInfo: ServiceInfo): Promise<ServiceInfo> {
         return new Promise((resolve, reject) => {
-            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.sameAs(serviceInfo));
+            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.equals(serviceInfo));
 
             if (serviceIndex === -1) {
                 this._services.push(serviceInfo);
                 
-                serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.sameAs(serviceInfo));
+                serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.equals(serviceInfo));
                 
                 this.emit("add", serviceInfo);
                 return resolve(this._services[serviceIndex]);
@@ -35,7 +35,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     update(serviceInfo: ServiceInfo): Promise<ServiceInfo> {
         return new Promise((resolve, reject) => {
-            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo != null && service.sameAs(serviceInfo));
+            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo != null && service.equals(serviceInfo));
 
             if (serviceIndex === -1) {
                 const error = new ServiceModuleUpdateError("Attempted to update a service that does not exist");
@@ -60,7 +60,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     remove(serviceName: Name): Promise<void> {
         return new Promise((resolve, reject) => {
-            const serviceIndex = this._nonNullServices().findIndex(service => service.value.name.sameAs(serviceName));
+            const serviceIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
 
             if (serviceIndex !== null) {
                 delete this._services[serviceIndex];

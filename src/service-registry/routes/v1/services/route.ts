@@ -138,7 +138,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
         if (checkBody) {
             bodyServiceInfo = new ServiceInfo(req.body);
 
-            if (!bodyServiceInfo.value.name.sameAs(serviceName)) {
+            if (!bodyServiceInfo.value.name.equals(serviceName)) {
                 throw new ParseRequestError("Body's service name value does not match the url param's value.");
             }
         }

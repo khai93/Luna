@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import { Name } from '../name';
 import { IValidatable } from '../interfaces/IValidatable';
 import { IValueObject } from '../interfaces/IValueObject';
+import { IEquatable } from '../interfaces/IEqualityComparer';
 export class ServiceInfoNotValid extends Error {
     constructor(message : string) {
         super(message);
@@ -34,7 +35,7 @@ export type ServiceInfoRaw = {
     online: boolean
 }
 
-export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue> {
+export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>, IEquatable<ServiceInfo> {
     private _value: ServiceInfoValue;
 
     constructor(info: string | ServiceInfoValue) {
@@ -61,17 +62,12 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             throw new ServiceInfoNotValid("Invalid Service");
         }
     }
-
+   
     isValid = (): boolean => Object.values(this._value).every(val => typeof(val) === "string" ? val && val.length > 0 : true);
 
-    /**
-     * Compares a ServiceInfoValue to the current value to see if they are the same
-     * @param comparedServiceInfo the service info to compare to
-     * @returns boolean
-     */
-    sameAs(comparedServiceInfo: ServiceInfo): boolean {
+    equals(object: ServiceInfo): boolean {
         // Comparing names because names should be unique between services
-        return comparedServiceInfo.value.name.value === this._value.name.value;
+        return object.value.name.value === this._value.name.value;
     }
 
     /**
