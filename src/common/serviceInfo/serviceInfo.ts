@@ -2,27 +2,28 @@ import { Name } from '../name';
 import { IValidatable } from '../interfaces/IValidatable';
 import { IValueObject } from '../interfaces/IValueObject';
 import { IEquatable } from '../interfaces/IEquatable';
+import InstanceId from '../instanceId';
+import { InstanceIdRaw } from '../instanceId/instanceId';
+import Hostname from '../hostname';
+import Port from '../port';
+import Version from '../version';
 
 export type ServiceInfoValue = {
+    instanceId: InstanceId,
     name: Name,
     description: string,
-    version: string,
-    https: boolean,
-    host: string,
-    port: number,
+    version: Version,
+    url: URL,
     last_heartbeat: Date,
-    online: boolean
 }
 
 export type ServiceInfoRaw = {
+    instanceId: InstanceIdRaw,
     name: string,
     description: string,
-    version: string,
-    https: boolean,
-    host: string,
-    port: number,
+    version: number,
+    url: string,
     last_heartbeat: number,
-    online: boolean
 }
 
 export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>, IEquatable<ServiceInfo> {
@@ -38,14 +39,12 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
         }
 
         this._value = {
+            instanceId: new InstanceId(obj.instanceId),
             name: new Name(obj.name),
             description: obj.description,
-            version: obj.version,
-            https: obj.https,
-            host: obj.host,
-            port: obj.port,
+            version: new Version(obj.version),
+            url: new URL(obj.url),
             last_heartbeat: new Date(Date.now()),
-            online: obj.online
         };
 
         if (!this.isValid) {
@@ -65,14 +64,12 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
      */
     raw() {
         return {
+            instanceId: this._value.instanceId.raw(),
             name: this._value.name.value,
             description: this._value.description,
-            version: this._value.version,
-            https: this._value.https,
-            host: this._value.host,
-            port: this._value.port,
-            last_heartbeat: this._value.last_heartbeat.getTime(),
-            online: this._value.online
+            version: this._value.version.value,
+            url: this._value.url.toString(),
+            last_heartbeat: this._value.last_heartbeat.getTime()
         } as ServiceInfoRaw;
     }
 

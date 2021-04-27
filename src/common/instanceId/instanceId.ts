@@ -21,13 +21,11 @@ export type InstanceIdRaw = {
 export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, IEquatable<InstanceId | string> {
     readonly value: InstanceIdValue;
     
-    constructor(_instanceId: string) {
-        const raw = InstanceId.parseInstanceIdString(_instanceId);
-
+    constructor(_instanceIdRaw: InstanceIdRaw) {
         this.value = {
-            serviceName: new Name(raw.serviceName),
-            hostname: new Hostname(raw.hostname),
-            port: new Port(raw.port)
+            serviceName: new Name(_instanceIdRaw.serviceName),
+            hostname: new Hostname(_instanceIdRaw.hostname),
+            port: new Port(_instanceIdRaw.port)
         }
 
         if (!this.isValid()) {
