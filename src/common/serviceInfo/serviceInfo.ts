@@ -1,17 +1,7 @@
-import glob from 'glob';
-import fs from 'fs/promises';
 import { Name } from '../name';
 import { IValidatable } from '../interfaces/IValidatable';
 import { IValueObject } from '../interfaces/IValueObject';
-import { IEquatable } from '../interfaces/IEqualityComparer';
-export class ServiceInfoNotValid extends Error {
-    constructor(message : string) {
-        super(message);
-
-        this.name = this.constructor.name;
-        this.stack = new Error().stack;
-    }
-}
+import { IEquatable } from '../interfaces/IEquatable';
 
 export type ServiceInfoValue = {
     name: Name,
@@ -59,7 +49,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
         };
 
         if (!this.isValid) {
-            throw new ServiceInfoNotValid("Invalid Service");
+            throw new ServiceInfoNotValidError("Invalid Service");
         }
     }
    
@@ -88,5 +78,14 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
 
     get value(): ServiceInfoValue {
         return this._value;
+    }
+}
+
+export class ServiceInfoNotValidError extends Error {
+    constructor(message : string) {
+        super(message);
+
+        this.name = this.constructor.name;
+        this.stack = new Error().stack;
     }
 }

@@ -1,4 +1,4 @@
-import { IEquatable } from "../interfaces/IEqualityComparer";
+import { IEquatable } from "../interfaces/IEquatable";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 
