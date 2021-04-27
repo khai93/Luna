@@ -5,6 +5,7 @@ import InstanceId from "../common/instanceId";
 import Middleware from "../common/middleware";
 import { Name } from "../common/name";
 import { ServiceInfo } from "../common/serviceInfo";
+import { Status } from "../common/status/status";
 import { LoggerModule } from "../modules/logger/types";
 import { ServiceModule } from "../modules/service/types";
 import { ApiGatewayServer } from "./server";
@@ -64,7 +65,9 @@ export class ApiGatewayProxy {
         // TODO: IMPLEMENT STATUS TO IDENTIFY SERVICES THAT CAN NOT TAKE REQUESTS ANYMORE
         let newServiceMethod: ServiceMethod = {
             serviceInfo,
-            handler: this.expressHttpProxy(serviceInfo.value.url.toString())
+            handler: !serviceInfo.value.status.equals(new Status("DOWN")) ? 
+                     this.expressHttpProxy(serviceInfo.value.url.toString()) :
+                     this.offlineMiddleware.value
         };
 
         const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.equals(serviceInfo));

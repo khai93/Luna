@@ -15,6 +15,7 @@ const data = {
     name: serviceConfig.name,
     description: serviceConfig.description,
     version: serviceConfig.version,
+    status: "OK",
     url: url.toString()
 };
 
@@ -54,7 +55,10 @@ app.listen(PORT, () => {
 function startHeartbeat() {
 
     setTimeout(() => {
-        registryInstance.put(servicesApiURL.toString(), data)
+        const downData = data;
+        downData.status = "DOWN";
+
+        registryInstance.put(servicesApiURL.toString(), downData)
         .then(() => {
             console.log("Sent heartbeat.");
             startHeartbeat();

@@ -7,6 +7,7 @@ import { InstanceIdRaw } from '../instanceId/instanceId';
 import Hostname from '../hostname';
 import Port from '../port';
 import Version from '../version';
+import { Status, StatusText } from '../status/status';
 
 export type ServiceInfoValue = {
     instanceId: InstanceId,
@@ -14,6 +15,7 @@ export type ServiceInfoValue = {
     description: string,
     version: Version,
     url: URL,
+    status: Status,
     last_heartbeat: Date,
 }
 
@@ -22,6 +24,7 @@ export type ServiceInfoRaw = {
     name: string,
     description: string,
     version: number,
+    status: string,
     url: string,
     last_heartbeat: number,
 }
@@ -47,6 +50,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             name: new Name(obj.name),
             description: obj.description,
             version: new Version(obj.version),
+            status: new Status(obj.status),
             url: new URL(obj.url),
             last_heartbeat: new Date(Date.now()),
         };
@@ -73,6 +77,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             description: this._value.description,
             version: this._value.version.value,
             url: this._value.url.toString(),
+            status: StatusText[this._value.status.value],
             last_heartbeat: this._value.last_heartbeat.getTime()
         } as ServiceInfoRaw;
     }
