@@ -1,3 +1,4 @@
+import { IEquatable } from "../interfaces/IEquatable";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 
@@ -10,7 +11,7 @@ class VersionNotValid extends Error {
     }
 }
 
-export class Version implements IValidatable, IValueObject<number> {
+export class Version implements IValidatable, IValueObject<number>, IEquatable<Version | number> {
     private _value: number;
 
     constructor(version: number) {
@@ -20,20 +21,23 @@ export class Version implements IValidatable, IValueObject<number> {
             throw new VersionNotValid("Version number provided is not a postive integer.");
         }
     }
+ 
 
-    isValid = (): boolean => this._value !== null && this._value > 0 && Number.isInteger(this._value);
+    isValid = (): boolean => this._value != null && 
+                             this._value > 0 && 
+                             Number.isInteger(this._value);
 
     get value(): number {
         return this._value
     }
 
-    sameAs(version: Version | number): boolean {
-        if (version instanceof Version) {
-            return this._value === version.value;
+    equals(object: number | Version): boolean {
+        if (object instanceof Version) {
+            return this._value === object.value;
         } else  {
-            const versionObj = new Version(version);
+            const versionObj = new Version(object);
 
-            return versionObj.sameAs(this);
+            return versionObj.equals(this);
         }
     }
 }

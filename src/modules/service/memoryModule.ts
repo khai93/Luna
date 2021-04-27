@@ -3,9 +3,11 @@ import { ServiceInfo } from '../../common/serviceInfo';
 import { Name } from '../../common/name';
 import TypedEmitter from "typed-emitter"
 import { ServiceModule, ServiceModuleRemoveError, ServiceModuleUpdateError, ServiceModuleEvents, ServiceModuleAddError } from './types';
+import InstanceId from '../../common/instanceId';
 
 export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter<ServiceModuleEvents>) implements ServiceModule {
     private _services: ServiceInfo[];
+    private _nonNullServices = (): ServiceInfo[]  => this._services.filter(service => service !== null);
 
     constructor() {
         super();
@@ -14,12 +16,12 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     add(serviceInfo: ServiceInfo): Promise<ServiceInfo> {
         return new Promise((resolve, reject) => {
-            let serviceIndex = this._services.findIndex(service => serviceInfo && service.sameAs(serviceInfo));
+            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.equals(serviceInfo));
 
             if (serviceIndex === -1) {
                 this._services.push(serviceInfo);
                 
-                serviceIndex = this._services.findIndex(service => serviceInfo && service.sameAs(serviceInfo));
+                serviceIndex = this._nonNullServices().findIndex(service => serviceInfo && service.equals(serviceInfo));
                 
                 this.emit("add", serviceInfo);
                 return resolve(this._services[serviceIndex]);
@@ -34,7 +36,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
 
     update(serviceInfo: ServiceInfo): Promise<ServiceInfo> {
         return new Promise((resolve, reject) => {
-            let serviceIndex = this._services.findIndex(service => serviceInfo != null && service.sameAs(serviceInfo));
+            let serviceIndex = this._nonNullServices().findIndex(service => serviceInfo != null && service.equals(serviceInfo));
 
             if (serviceIndex === -1) {
                 const error = new ServiceModuleUpdateError("Attempted to update a service that does not exist");
@@ -57,17 +59,17 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         })
     }
 
-    remove(serviceName: Name): Promise<void> {
+    remove(instanceId: InstanceId): Promise<void> {
         return new Promise((resolve, reject) => {
-            const serviceIndex = this._services.findIndex(service => service.value.name.sameAs(serviceName));
+            const serviceIndex = this._nonNullServices().findIndex(service => service.value.instanceId.equals(instanceId));
 
             if (serviceIndex !== null) {
                 delete this._services[serviceIndex];
 
-                this.emit("remove", serviceName)
+                this.emit("remove", instanceId)
                 return resolve();
             } else {
-                const error = new ServiceModuleRemoveError("serviceName does not exist in database");
+                const error = new ServiceModuleRemoveError("InstanceId does not exist in database");
                 
                 this.emit('error', error);
                 return reject(error);
@@ -75,9 +77,21 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         });
     }
 
-    find(serviceName: Name): Promise<ServiceInfo | null> {
+    findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | null> {
         return new Promise((resolve, reject) => {
-            const foundIndex = this._services.findIndex(service => service.value.name.value === serviceName.value);
+            const foundIndex = this._nonNullServices().findIndex(service => service.value.instanceId.equals(instanceId));
+
+            if (foundIndex === -1) {
+                return resolve(null);
+            }
+
+            return resolve(this._services[foundIndex]);
+        });
+    }
+
+    findByName(serviceName: Name) : Promise<ServiceInfo | null> {
+        return new Promise((resolve, reject) => {
+            const foundIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
 
             if (foundIndex === -1) {
                 return resolve(null);

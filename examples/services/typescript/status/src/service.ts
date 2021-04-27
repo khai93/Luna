@@ -1,18 +1,25 @@
 import express from 'express';
-import fs from 'fs/promises';
 import fsSync from 'fs';
-import http from 'http';
-import { AddressInfo } from 'node:net';
 import axios from 'axios';
 
 const serviceConfig = JSON.parse(fsSync.readFileSync("service.json", "utf8"));
 
 const app = express();
-const host = process.env.HOST || '127.0.0.1';
+const url = new URL('http://localhost:4520');
+const hostname = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 4520;
 const registryServerBaseUrl = "http://localhost:3000/";
-const servicesApiURL = new URL("luna/v1/services/" + serviceConfig.name, registryServerBaseUrl);
 
+const data = {
+    instanceId: `${serviceConfig.name}:${hostname}:${PORT}`,
+    name: serviceConfig.name,
+    description: serviceConfig.description,
+    version: serviceConfig.version,
+    status: "OK",
+    url: url.toString()
+};
+
+const servicesApiURL = new URL("luna/v1/services/" + data.instanceId, registryServerBaseUrl);
 const registryInstance = axios.create({
     baseURL: registryServerBaseUrl.toString()
 });
@@ -23,7 +30,6 @@ app.get("/", (req, res) => {
         description: serviceConfig.description,
         version: serviceConfig.version,
         status: "OK",
-        online: true,
         modules: [
             {
                 database: {
@@ -35,25 +41,31 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Status Service started on ${host}:${PORT}`);
+    console.log(`Status Service started on ${hostname}:${PORT}`);
 
-    const data = {
-        name: serviceConfig.name,
-        description: serviceConfig.description,
-        version: serviceConfig.version,
-        https: serviceConfig.https,
-        host: host,
-        port: PORT,
-        online: true
-    }
-
-    
     registryInstance.post(servicesApiURL.toString(), data)
         .then(() => {
             console.log("Registered status service.");
+
+            startHeartbeat();
         })
         .catch(e => { throw e });
 });
+
+function startHeartbeat() {
+
+    setTimeout(() => {
+        const downData = data;
+        downData.status = "DOWN";
+
+        registryInstance.put(servicesApiURL.toString(), downData)
+        .then(() => {
+            console.log("Sent heartbeat.");
+            startHeartbeat();
+        })
+        .catch(e => { throw e });
+    }, 30000)
+}
 
 
 function exitHandler(e: Error) {

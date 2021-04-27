@@ -1,3 +1,4 @@
+import { IEquatable } from "../interfaces/IEquatable";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 
@@ -11,7 +12,7 @@ export class NameNotValid extends Error {
 }
 
 
-export class Name implements IValidatable, IValueObject<string> {
+export class Name implements IValidatable, IValueObject<string>, IEquatable<Name | string> {
     private _value: string;
 
     constructor(name: string) {
@@ -22,21 +23,21 @@ export class Name implements IValidatable, IValueObject<string> {
         }
     }
 
-    isValid = (): boolean => this._value !== null && 
-                             this._value.length > 0
+    isValid = (): boolean => this._value != null && 
+                             this._value.length > 0;
                              
     
     get value(): string {
         return this._value;
     } 
 
-    sameAs(name: Name | string): boolean {
-        if (name instanceof Name) {
-            return name.value === this._value
+    equals(object: string | Name): boolean {
+        if (object instanceof Name) {
+            return object.value === this._value
         } else {
-            const nameObj = new Name(name);
+            const nameObj = new Name(object);
 
-            return nameObj.sameAs(this);
+            return nameObj.equals(this);
         }
     }
 }

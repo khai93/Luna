@@ -1,6 +1,5 @@
 {
     "name": "status",
     "description": "An example service that always returns OK on its health check api",
-    "version": "1",
-    "https": false
+    "version": "1"
 }

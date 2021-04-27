@@ -1,74 +1,70 @@
-import glob from 'glob';
-import fs from 'fs/promises';
 import { Name } from '../name';
 import { IValidatable } from '../interfaces/IValidatable';
 import { IValueObject } from '../interfaces/IValueObject';
-export class ServiceInfoNotValid extends Error {
-    constructor(message : string) {
-        super(message);
-
-        this.name = this.constructor.name;
-        this.stack = new Error().stack;
-    }
-}
+import { IEquatable } from '../interfaces/IEquatable';
+import InstanceId from '../instanceId';
+import { InstanceIdRaw } from '../instanceId/instanceId';
+import Hostname from '../hostname';
+import Port from '../port';
+import Version from '../version';
+import { Status, StatusText } from '../status/status';
 
 export type ServiceInfoValue = {
+    instanceId: InstanceId,
     name: Name,
     description: string,
-    version: string,
-    https: boolean,
-    host: string,
-    port: number,
-    online: boolean
+    version: Version,
+    url: URL,
+    status: Status,
+    last_heartbeat: Date,
 }
 
 export type ServiceInfoRaw = {
+    instanceId: InstanceIdRaw,
     name: string,
     description: string,
-    version: string,
-    https: boolean,
-    host: string,
-    port: number,
-    online: boolean
+    version: number,
+    status: string,
+    url: string,
+    last_heartbeat: number,
 }
 
-export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue> {
+export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>, IEquatable<ServiceInfo> {
     private _value: ServiceInfoValue;
 
-    constructor(info: string | ServiceInfoValue) {
-        let obj;
+    constructor(info: string | ServiceInfoRaw) {
+        let obj: ServiceInfoRaw;
 
         if (typeof(info) === 'string') {
             obj = JSON.parse(info) as unknown as ServiceInfoRaw;
         } else {
-            obj = info as unknown as ServiceInfoRaw;
+            obj = info;
+        }
+
+        if (typeof(obj.instanceId) === 'string') {
+            obj.instanceId = InstanceId.parseInstanceIdString(obj.instanceId);
         }
 
         this._value = {
+            instanceId: new InstanceId(obj.instanceId),
             name: new Name(obj.name),
             description: obj.description,
-            version: obj.version,
-            https: obj.https,
-            host: obj.host,
-            port: obj.port,
-            online: obj.online
+            version: new Version(obj.version),
+            status: new Status(obj.status),
+            url: new URL(obj.url),
+            last_heartbeat: new Date(Date.now()),
         };
 
         if (!this.isValid) {
-            throw new ServiceInfoNotValid("Invalid Service");
+            throw new ServiceInfoNotValidError("Invalid Service");
         }
     }
-
+   
     isValid = (): boolean => Object.values(this._value).every(val => typeof(val) === "string" ? val && val.length > 0 : true);
 
-    /**
-     * Compares a ServiceInfoValue to the current value to see if they are the same
-     * @param comparedServiceInfo the service info to compare to
-     * @returns boolean
-     */
-    sameAs(comparedServiceInfo: ServiceInfo): boolean {
+    equals(object: ServiceInfo): boolean {
         // Comparing names because names should be unique between services
-        return comparedServiceInfo.value.name.value === this._value.name.value;
+        return object.value.name.value === this._value.name.value;
     }
 
     /**
@@ -76,17 +72,26 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
      */
     raw() {
         return {
+            instanceId: this._value.instanceId.raw(),
             name: this._value.name.value,
             description: this._value.description,
-            version: this._value.version,
-            https: this._value.https,
-            host: this._value.host,
-            port: this._value.port,
-            online: this._value.online
+            version: this._value.version.value,
+            url: this._value.url.toString(),
+            status: StatusText[this._value.status.value],
+            last_heartbeat: this._value.last_heartbeat.getTime()
         } as ServiceInfoRaw;
     }
 
     get value(): ServiceInfoValue {
         return this._value;
+    }
+}
+
+export class ServiceInfoNotValidError extends Error {
+    constructor(message : string) {
+        super(message);
+
+        this.name = this.constructor.name;
+        this.stack = new Error().stack;
     }
 }

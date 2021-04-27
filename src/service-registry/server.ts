@@ -33,7 +33,7 @@ export class ServiceRegistryServer {
         this._expressApp.use(this.bodyParser());
 
         for(const route of this.routes) {
-            if (route.version.sameAs(1)) {
+            if (route.version.equals(1)) {
                 route.execute(lunaRouterV1);
             }
         }
