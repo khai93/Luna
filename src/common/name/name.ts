@@ -23,8 +23,8 @@ export class Name implements IValidatable, IValueObject<string>, IEquatable<Name
         }
     }
 
-    isValid = (): boolean => this._value !== null && 
-                             this._value.length > 0
+    isValid = (): boolean => this._value != null && 
+                             this._value.length > 0;
                              
     
     get value(): string {

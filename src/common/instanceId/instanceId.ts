@@ -1,4 +1,3 @@
-
 import Hostname from "../hostname";
 import { IEquatable } from "../interfaces/IEquatable";
 import { IValidatable } from "../interfaces/IValidatable";
@@ -29,13 +28,13 @@ export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, 
         }
 
         if (!this.isValid()) {
-            throw new InstanceIdNotValidError("String is not a valid instance id");
+            throw new InstanceIdNotValidError(`Object '${_instanceIdRaw.toString()}' is not a valid instance id`);
         }
     }
 
-    isValid = (): boolean => this.value !== null &&
+    isValid = (): boolean => this.value != null &&
                              this.value.hostname.isValid() &&
-                             this.value.port !== null &&
+                             this.value.port != null &&
                              this.value.serviceName.isValid(); 
 
     equals(object: InstanceId): boolean {
@@ -55,19 +54,17 @@ export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, 
     static parseInstanceIdString(instanceIdString: string): InstanceIdRaw {
         const instanceIdRegex = /(\w+):(.*):(\d+)/g;
 
-        const matches = instanceIdString.match(instanceIdRegex);
-
-        console.log(matches);
-
-        if (matches !== null && matches.length === 3) {
+        const match = instanceIdRegex.exec(instanceIdString);
+        
+        if (match != null && match) {
             return {
-                serviceName: matches[0],
-                hostname: matches[1],
-                port: parseInt(matches[2])
+                serviceName: match[1],
+                hostname: match[2],
+                port: parseInt(match[3])
             }
         }
 
-        throw new ParseInstanceIdStringError("String is not a valid instance id format.");
+        throw new ParseInstanceIdStringError(`'${instanceIdString}' is not in a valid instance id format.`);
     }
 }
 

@@ -23,7 +23,9 @@ export class Version implements IValidatable, IValueObject<number>, IEquatable<V
     }
  
 
-    isValid = (): boolean => this._value !== null && this._value > 0 && Number.isInteger(this._value);
+    isValid = (): boolean => this._value != null && 
+                             this._value > 0 && 
+                             Number.isInteger(this._value);
 
     get value(): number {
         return this._value

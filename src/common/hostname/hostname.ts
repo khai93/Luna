@@ -18,7 +18,7 @@ export class Hostname implements IValidatable, IValueObject<string>, IEquatable<
         return /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/g.test(hostname);
     }
 
-    isValid = (): boolean => this.value !== null && 
+    isValid = (): boolean => this.value != null && 
                              Hostname.isValid(this.value);
                         
     equals(object: Hostname | string): boolean {

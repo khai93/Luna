@@ -1,10 +1,14 @@
 import { Application, Request, Response, Router } from "express";
 import { inject, injectable } from "tsyringe";
+import { HostnameNotValidError } from "../../../../common/hostname/hostname";
+import InstanceId from "../../../../common/instanceId";
+import { InstanceIdNotValidError } from "../../../../common/instanceId/instanceId";
 import Middleware from "../../../../common/middleware";
 import { Name } from "../../../../common/name";
 import { NameNotValid } from "../../../../common/name/name";
+import { PortNotValidError } from "../../../../common/port/port";
 import { ServiceInfo } from "../../../../common/serviceInfo";
-import { ServiceInfoNotValid } from "../../../../common/serviceInfo/serviceInfo";
+import { ServiceInfoNotValidError } from "../../../../common/serviceInfo/serviceInfo";
 import Version from "../../../../common/version";
 import { Configuration } from "../../../../config/config";
 import { LoggerModule } from "../../../../modules/logger/types";
@@ -28,18 +32,18 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
          * 
          * Register a service in the database
          */
-        router.post('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+        router.post('/services/:instanceId', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
-                const { serviceName, bodyServiceInfo } = this.parseRequest(req);
+                const { instanceId, bodyServiceInfo } = this.parseRequest(req);
 
                 const _bodyServiceInfo = bodyServiceInfo as ServiceInfo;
 
-                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+                const foundServiceInDatabase = await this.serviceModule.findByInstanceId(instanceId);
 
                 let serviceInfoAdded;
 
                 if (foundServiceInDatabase) {
-                    throw new Error("Duplicate service id.");
+                    throw new Error("Duplicate instance id.");
                 } else {
                     serviceInfoAdded = await this.serviceModule.add(_bodyServiceInfo);
                 }
@@ -57,13 +61,13 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
          * 
          * Updates count as heartbeats.
          */
-         router.put('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+         router.put('/services/:instanceId', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
-                const { serviceName, bodyServiceInfo } = this.parseRequest(req);
+                const { instanceId, bodyServiceInfo } = this.parseRequest(req);
 
                 const _bodyServiceInfo = bodyServiceInfo as ServiceInfo;
 
-                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+                const foundServiceInDatabase = await this.serviceModule.findByInstanceId(instanceId);
 
                 let serviceInfoUpdated;
 
@@ -71,7 +75,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
                     const lastHeartbeatToNowDifferenceInMS = Date.now() - foundServiceInDatabase.value.last_heartbeat.getTime();
                     
                     if (Math.floor(lastHeartbeatToNowDifferenceInMS/1000) > (this.serviceRegistryConfig.registry?.heartbeat_rate as number)) {
-                        this.logger.warn(`service [${serviceName.value}] was ${lastHeartbeatToNowDifferenceInMS - ((this.serviceRegistryConfig.registry?.heartbeat_rate as number) * 1000)}ms late in it's heartbeat`);
+                        this.logger.warn(`service [${instanceId.value}] was ${lastHeartbeatToNowDifferenceInMS - ((this.serviceRegistryConfig.registry?.heartbeat_rate as number) * 1000)}ms late in it's heartbeat`);
                     }
 
                     serviceInfoUpdated = await this.serviceModule.update(_bodyServiceInfo);
@@ -90,16 +94,16 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
          * 
          * Delete a service in the database
          */
-         router.delete('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+         router.delete('/services/:instanceId', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
-                const { serviceName } = this.parseRequest(req, false);
+                const { instanceId } = this.parseRequest(req, false);
 
-                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+                const foundServiceInDatabase = await this.serviceModule.findByInstanceId(instanceId);
 
                 if (foundServiceInDatabase !== null) {
-                    await this.serviceModule.remove(serviceName);
+                    await this.serviceModule.remove(instanceId);
                 } else {
-                    throw new Error("Service '" + serviceName.value + "' is not registered.");
+                    throw new Error("Service '" + instanceId.raw().serviceName + "' is not registered.");
                 }
 
                 return res.json({success: true});
@@ -113,11 +117,11 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
          * 
          * Get service's raw info
          */
-        router.get('/services/:serviceName', this.authMiddleware.value, async (req: Request, res: Response) => {
+        router.get('/services/:instanceId', this.authMiddleware.value, async (req: Request, res: Response) => {
             try {
-                const { serviceName } = this.parseRequest(req, false);
+                const { instanceId } = this.parseRequest(req, false);
 
-                const foundServiceInDatabase = await this.serviceModule.find(serviceName);
+                const foundServiceInDatabase = await this.serviceModule.findByInstanceId(instanceId);
 
                 if (foundServiceInDatabase === null) {
                     throw new Error("Service requested is not registered.");
@@ -130,21 +134,21 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
         });
     }
 
-    private parseRequest(req: Request, checkBody: boolean = true): {serviceName: Name, bodyServiceInfo?: ServiceInfo} {
-        const serviceName = new Name(req.params.serviceName);
+    private parseRequest(req: Request, checkBody: boolean = true): {instanceId: InstanceId, bodyServiceInfo?: ServiceInfo} {
+        const instanceId = new InstanceId(InstanceId.parseInstanceIdString(req.params.instanceId));
         
         let bodyServiceInfo;
 
         if (checkBody) {
             bodyServiceInfo = new ServiceInfo(req.body);
 
-            if (!bodyServiceInfo.value.name.equals(serviceName)) {
-                throw new ParseRequestError("Body's service name value does not match the url param's value.");
+            if (!bodyServiceInfo.value.instanceId.equals(instanceId)) {
+                throw new ParseRequestError("Body's instance id value does not match the url param's value.");
             }
         }
 
         return {
-            serviceName,
+            instanceId,
             bodyServiceInfo
         }
     }
@@ -165,7 +169,10 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
     private isBadRequest(e: Error): boolean {
         return e instanceof ParseRequestError &&
                e instanceof NameNotValid &&
-               e instanceof ServiceInfoNotValid;
+               e instanceof ServiceInfoNotValidError &&
+               e instanceof HostnameNotValidError &&
+               e instanceof PortNotValidError &&
+               e instanceof InstanceIdNotValidError;
     }
 }
 

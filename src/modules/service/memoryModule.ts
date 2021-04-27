@@ -3,6 +3,7 @@ import { ServiceInfo } from '../../common/serviceInfo';
 import { Name } from '../../common/name';
 import TypedEmitter from "typed-emitter"
 import { ServiceModule, ServiceModuleRemoveError, ServiceModuleUpdateError, ServiceModuleEvents, ServiceModuleAddError } from './types';
+import InstanceId from '../../common/instanceId';
 
 export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter<ServiceModuleEvents>) implements ServiceModule {
     private _services: ServiceInfo[];
@@ -58,17 +59,17 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         })
     }
 
-    remove(serviceName: Name): Promise<void> {
+    remove(instanceId: InstanceId): Promise<void> {
         return new Promise((resolve, reject) => {
-            const serviceIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
+            const serviceIndex = this._nonNullServices().findIndex(service => service.value.instanceId.equals(instanceId));
 
             if (serviceIndex !== null) {
                 delete this._services[serviceIndex];
 
-                this.emit("remove", serviceName)
+                this.emit("remove", instanceId)
                 return resolve();
             } else {
-                const error = new ServiceModuleRemoveError("serviceName does not exist in database");
+                const error = new ServiceModuleRemoveError("InstanceId does not exist in database");
                 
                 this.emit('error', error);
                 return reject(error);
@@ -76,9 +77,21 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         });
     }
 
-    find(serviceName: Name): Promise<ServiceInfo | null> {
+    findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | null> {
         return new Promise((resolve, reject) => {
-            const foundIndex = this._nonNullServices().findIndex(service => service.value.name.value === serviceName.value);
+            const foundIndex = this._nonNullServices().findIndex(service => service.value.instanceId.equals(instanceId));
+
+            if (foundIndex === -1) {
+                return resolve(null);
+            }
+
+            return resolve(this._services[foundIndex]);
+        });
+    }
+
+    findByName(serviceName: Name) : Promise<ServiceInfo | null> {
+        return new Promise((resolve, reject) => {
+            const foundIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
 
             if (foundIndex === -1) {
                 return resolve(null);

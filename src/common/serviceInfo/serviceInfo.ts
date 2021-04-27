@@ -29,13 +29,17 @@ export type ServiceInfoRaw = {
 export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>, IEquatable<ServiceInfo> {
     private _value: ServiceInfoValue;
 
-    constructor(info: string | ServiceInfoValue) {
-        let obj;
+    constructor(info: string | ServiceInfoRaw) {
+        let obj: ServiceInfoRaw;
 
         if (typeof(info) === 'string') {
             obj = JSON.parse(info) as unknown as ServiceInfoRaw;
         } else {
-            obj = info as unknown as ServiceInfoRaw;
+            obj = info;
+        }
+
+        if (typeof(obj.instanceId) === 'string') {
+            obj.instanceId = InstanceId.parseInstanceIdString(obj.instanceId);
         }
 
         this._value = {

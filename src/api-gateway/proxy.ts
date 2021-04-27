@@ -1,6 +1,7 @@
 
 import { Application, RequestHandler, Router } from "express";
 import { injectable, inject, scoped, Lifecycle } from "tsyringe";
+import InstanceId from "../common/instanceId";
 import Middleware from "../common/middleware";
 import { Name } from "../common/name";
 import { ServiceInfo } from "../common/serviceInfo";
@@ -44,9 +45,9 @@ export class ApiGatewayProxy {
             this.updateServiceProxy(updatedServiceInfo);
         });
 
-        this.serviceModule.on('remove', (removedServiceName: Name) => {
-            this.logger.log(`Service [${removedServiceName.value}] deregistered.`);
-            this.removeServiceProxy(removedServiceName);
+        this.serviceModule.on('remove', (removedInstanceId: InstanceId) => {
+            this.logger.log(`Service [${removedInstanceId.raw().serviceName}] deregistered.`);
+            this.removeServiceProxy(removedInstanceId.value.serviceName);
         });
 
         this.serviceModule.on('add', (addedServiceInfo: ServiceInfo) => {
@@ -58,25 +59,29 @@ export class ApiGatewayProxy {
 
     private updateServiceProxy(serviceInfo: ServiceInfo) {
         this._router = this.router();
-
-        const serviceEndpoint = new URL((serviceInfo.value.https ? "https://" : "http://") + serviceInfo.value.host + ":" + serviceInfo.value.port);
         
+
+        // TODO: IMPLEMENT STATUS TO IDENTIFY SERVICES THAT CAN NOT TAKE REQUESTS ANYMORE
         let newServiceMethod: ServiceMethod = {
             serviceInfo,
-            handler: serviceInfo.value.online ? this.expressHttpProxy(serviceEndpoint) : this.offlineMiddleware.value
+            handler: this.expressHttpProxy(serviceInfo.value.url.toString())
         };
 
         const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.equals(serviceInfo));
 
+       
         if (serviceMethodIndexFound >= 0) {
             this._serviceMethods[serviceMethodIndexFound] = newServiceMethod;
         } else {
             this._serviceMethods.push(newServiceMethod);
         }
 
-
         for (const serviceMethod of this._nonNullServiceMethods()) {
-            this._router.use('/' + serviceMethod && serviceMethod.serviceInfo.value.name.value, serviceMethod.handler);
+            const route = '/' + serviceMethod.serviceInfo.raw().name;
+
+            if (serviceMethod != null && route.trim() != '/') {
+                this._router.use(route, serviceMethod.handler);
+            }
         }
     }
 
@@ -90,6 +95,7 @@ export class ApiGatewayProxy {
         }
 
         for (const serviceMethod of this._nonNullServiceMethods()) {
+            console.log(serviceMethod);
             this._router.use('/' + serviceMethod.serviceInfo.value.name.value, serviceMethod.handler);
         }
     }
