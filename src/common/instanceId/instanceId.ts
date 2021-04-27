@@ -51,17 +51,19 @@ export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, 
         };
     }
 
-    static parseInstanceIdString(instanceIdString: string): InstanceIdRaw {
+    static fromString(instanceIdString: string): InstanceId {
         const instanceIdRegex = /(\w+):(.*):(\d+)/g;
 
         const match = instanceIdRegex.exec(instanceIdString);
         
         if (match != null && match) {
-            return {
+            const raw = {
                 serviceName: match[1],
                 hostname: match[2],
                 port: parseInt(match[3])
-            }
+            };
+
+            return new InstanceId(raw);
         }
 
         throw new ParseInstanceIdStringError(`'${instanceIdString}' is not in a valid instance id format.`);

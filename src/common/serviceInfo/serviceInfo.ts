@@ -42,7 +42,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
         }
 
         if (typeof(obj.instanceId) === 'string') {
-            obj.instanceId = InstanceId.parseInstanceIdString(obj.instanceId);
+            obj.instanceId = InstanceId.fromString(obj.instanceId).raw();
         }
 
         this._value = {

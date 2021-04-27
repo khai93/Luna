@@ -135,7 +135,7 @@ export class ServiceRegistryUpdateRoute implements ServiceRegistryRoute {
     }
 
     private parseRequest(req: Request, checkBody: boolean = true): {instanceId: InstanceId, bodyServiceInfo?: ServiceInfo} {
-        const instanceId = new InstanceId(InstanceId.parseInstanceIdString(req.params.instanceId));
+        const instanceId = InstanceId.fromString(req.params.instanceId);
         
         let bodyServiceInfo;
 
