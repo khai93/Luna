@@ -89,15 +89,15 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         });
     }
 
-    findByName(serviceName: Name) : Promise<ServiceInfo | null> {
+    findByName(serviceName: Name) : Promise<ServiceInfo[] | null> {
         return new Promise((resolve, reject) => {
-            const foundIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
+            const foundServices = this._nonNullServices().filter(service => service.value.name.equals(serviceName));
 
-            if (foundIndex === -1) {
+            if (foundServices.length <= 0) {
                 return resolve(null);
             }
 
-            return resolve(this._services[foundIndex]);
+            return resolve(foundServices);
         });
     }
 

@@ -17,6 +17,7 @@ import authMiddleware from './service-registry/middlewares/auth';
 import { LoggerModule } from './modules/logger/types';
 import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
+import compression from 'compression';
 
 export { container }
 
@@ -72,6 +73,10 @@ container.register("ExpressHttpProxy", {
 container.register("ExpressCORSFunction", {
     useValue: cors
 });
+
+container.register("ExpressGzipFunction", {
+    useValue: compression
+})
 
 
 /** VALUES */
