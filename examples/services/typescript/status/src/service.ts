@@ -1,13 +1,16 @@
-import express from 'express';
+import express, { Response, Request } from 'express';
 import fsSync from 'fs';
 import axios from 'axios';
 
 const serviceConfig = JSON.parse(fsSync.readFileSync("service.json", "utf8"));
 
-const app = express();
+const instance1 = express();
+const instance2 = express();
 const url = new URL('http://localhost:4520');
+const url2 = new URL('http://localhost:1234');
 const hostname = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 4520;
+const PORT2 = 1234;
 const registryServerBaseUrl = "http://localhost:3000/";
 
 const data = {
@@ -19,12 +22,26 @@ const data = {
     url: url.toString()
 };
 
+const data2 = {
+    instanceId: `${serviceConfig.name}:${hostname}:${PORT2}`,
+    name: serviceConfig.name,
+    description: serviceConfig.description,
+    version: serviceConfig.version,
+    status: "OK",
+    url: url2.toString()
+}
+
 const servicesApiURL = new URL("luna/v1/services/" + data.instanceId, registryServerBaseUrl);
+const servicesApiURL2 = new URL("luna/v1/services/" + data2.instanceId, registryServerBaseUrl);
+
 const registryInstance = axios.create({
     baseURL: registryServerBaseUrl.toString()
 });
 
-app.get("/", (req, res) => {
+
+const instanceHealthCheckHandler = (instanceNum: number) => (req: Request, res: Response) => {
+    console.log(`Instance ${instanceNum}: Health check`);
+
     res.send({
         name: serviceConfig.name,
         description: serviceConfig.description,
@@ -38,30 +55,49 @@ app.get("/", (req, res) => {
             }
         ]
     });
-});
+}
 
-app.listen(PORT, () => {
-    console.log(`Status Service started on ${hostname}:${PORT}`);
+instance1.get("/", instanceHealthCheckHandler(1));
+instance2.get("/", instanceHealthCheckHandler(2));
+
+
+instance1.listen(PORT, () => {
+    console.log(`Status Service 1 started on ${hostname}:${PORT}`);
 
     registryInstance.post(servicesApiURL.toString(), data)
         .then(() => {
-            console.log("Registered status service.");
+            console.log("Registered status service 1.");
 
-            startHeartbeat();
+            startHeartbeat(1);
         })
         .catch(e => { throw e });
 });
 
-function startHeartbeat() {
+instance2.listen(PORT2, () => {
+    console.log(`Status Service 2 started on ${hostname}:${PORT2}`);
 
+    registryInstance.post(servicesApiURL2.toString(), data2)
+        .then(() => {
+            console.log("Registered status service 2.");
+
+            startHeartbeat(2);
+        })
+        .catch(e => { throw e });
+});
+
+
+function startHeartbeat(instanceNum: number) {
     setTimeout(() => {
-        const downData = data;
-        downData.status = "DOWN";
+        let downData = data;
 
-        registryInstance.put(servicesApiURL.toString(), downData)
+        if (instanceNum = 2) {
+            downData = data2;
+        }
+
+        registryInstance.put(instanceNum == 2 ? servicesApiURL2.toString() : servicesApiURL.toString(), downData)
         .then(() => {
             console.log("Sent heartbeat.");
-            startHeartbeat();
+            startHeartbeat(instanceNum);
         })
         .catch(e => { throw e });
     }, 30000)

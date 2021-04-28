@@ -18,6 +18,9 @@ import { LoggerModule } from './modules/logger/types';
 import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
+import { LoadBalancerModule } from './modules/load-balancer/types';
+import loadBalancerModules from './modules/load-balancer';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 export { container }
 
@@ -30,6 +33,11 @@ container.register<ServiceModule>("ServiceModule", {
 container.register<LoggerModule>("LoggerModule", {
     useClass: loggerModule
 }, { lifecycle: Lifecycle.ContainerScoped });
+
+
+container.register<LoadBalancerModule>("LoadBalancerModule", {
+    useClass: loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module
+}, { lifecycle: Lifecycle.ContainerScoped })
 
 
 /** MIDDLEWARES */
@@ -76,6 +84,10 @@ container.register("ExpressCORSFunction", {
 
 container.register("ExpressGzipFunction", {
     useValue: compression
+});
+
+container.register("CreateProxyMiddleware", {
+    useValue: createProxyMiddleware
 })
 
 

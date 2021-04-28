@@ -63,8 +63,8 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
     isValid = (): boolean => Object.values(this._value).every(val => typeof(val) === "string" ? val && val.length > 0 : true);
 
     equals(object: ServiceInfo): boolean {
-        // Comparing names because names should be unique between services
-        return object.value.name.value === this._value.name.value;
+        // Comparing instance ids because instance ids should be unique between services
+        return object.value.instanceId.equals(this._value.instanceId);
     }
 
     /**
