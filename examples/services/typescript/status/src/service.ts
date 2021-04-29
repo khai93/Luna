@@ -60,7 +60,6 @@ const instanceHealthCheckHandler = (instanceNum: number) => (req: Request, res: 
 instance1.get("/", instanceHealthCheckHandler(1));
 instance2.get("/", instanceHealthCheckHandler(2));
 
-
 instance1.listen(PORT, () => {
     console.log(`Status Service 1 started on ${hostname}:${PORT}`);
 

@@ -19,8 +19,9 @@ import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
 import { LoadBalancerModule } from './modules/load-balancer/types';
-import loadBalancerModules from './modules/load-balancer';
+import loadBalancerModules, { LoadBalancerType } from './modules/load-balancer';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { Logger } from 'tslog';
 
 export { container }
 
@@ -35,8 +36,18 @@ container.register<LoggerModule>("LoggerModule", {
 }, { lifecycle: Lifecycle.ContainerScoped });
 
 
+/**
+ * Injects the module that is found with the same enum as the config
+ */
+
+let loadBalancerModule = loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module;
+
+if (loadBalancerModule == null) {
+    throw new Error(`The Load balancer Type '${apiGatewayConfig.balancer}' in config does not match any of the supported types. To not use a load balancer, use 'None' type.`);
+}
+
 container.register<LoadBalancerModule>("LoadBalancerModule", {
-    useClass: loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module
+    useClass: loadBalancerModule
 }, { lifecycle: Lifecycle.ContainerScoped })
 
 
@@ -105,4 +116,6 @@ container.register<Function>("ExpressBodyParser", {
     useValue: express.json
 });
 
-
+container.register<Logger>("TslogLogger", {
+    useValue: new Logger()
+});

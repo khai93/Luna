@@ -1,8 +1,12 @@
+import { NoneModule } from './noneModule';
 import { RoundRobinModule } from './roundRobinModule';
 import { LoadBalancerModule } from './types';
+import { WeightedRoundRobinModule } from './weightedRobinModule';
 
 export enum LoadBalancerType {
-    RoundRobin
+    RoundRobin,
+    WeightedRoundRobin,
+    None
 }
 
 export type LoadBalancerTypeListItem = {
@@ -14,6 +18,14 @@ const modules: LoadBalancerTypeListItem[] = [
     {
         type: LoadBalancerType.RoundRobin,
         module: RoundRobinModule
+    },
+    {
+        type: LoadBalancerType.WeightedRoundRobin,
+        module: WeightedRoundRobinModule
+    },
+    {
+        type: LoadBalancerType.None,
+        module: NoneModule
     }
 ]
 
