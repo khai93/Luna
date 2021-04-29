@@ -4,12 +4,12 @@ import { Name } from "../../common/name";
 import { ServiceInfo } from "../../common/serviceInfo";
 
 export interface ServiceModule extends EventEmitter {
-    readonly services: ServiceInfo[];
     add(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
     update(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
     remove(instanceId: InstanceId): Promise<void>;
     findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | null>;
-    findByName(serviceName: Name): Promise<ServiceInfo | null>
+    findAllByName(serviceName: Name): Promise<ServiceInfo[] | null>;
+    getAll(): Promise<ServiceInfo[]>;
 }
 
 export interface ServiceModuleEvents {

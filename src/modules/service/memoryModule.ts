@@ -4,6 +4,7 @@ import { Name } from '../../common/name';
 import TypedEmitter from "typed-emitter"
 import { ServiceModule, ServiceModuleRemoveError, ServiceModuleUpdateError, ServiceModuleEvents, ServiceModuleAddError } from './types';
 import InstanceId from '../../common/instanceId';
+import { injectable } from 'tsyringe';
 
 export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter<ServiceModuleEvents>) implements ServiceModule {
     private _services: ServiceInfo[];
@@ -89,17 +90,23 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         });
     }
 
-    findByName(serviceName: Name) : Promise<ServiceInfo | null> {
+    findAllByName(serviceName: Name) : Promise<ServiceInfo[] | null> {
         return new Promise((resolve, reject) => {
-            const foundIndex = this._nonNullServices().findIndex(service => service.value.name.equals(serviceName));
+            const foundServices = this._nonNullServices().filter(service => service.value.name.equals(serviceName));
 
-            if (foundIndex === -1) {
+            if (foundServices.length <= 0) {
                 return resolve(null);
             }
 
-            return resolve(this._services[foundIndex]);
+            return resolve(foundServices);
         });
     }
 
-    get services() { return this._services }
+
+
+    getAll(): Promise<ServiceInfo[]> {
+        return new Promise((resolve, reject) => {
+            return resolve(this._nonNullServices());
+        });
+    }
 }

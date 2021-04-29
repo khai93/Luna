@@ -22,7 +22,7 @@ export class ServiceRegistryLunaRoute implements ServiceRegistryRoute {
         router.get('/', async (req: Request, res: Response) => {
             res.json({
                 success: true,
-                services: this.serviceModule.services
+                services: await this.serviceModule.getAll()
             });
         });
     }

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { LoadBalancerType } from '../modules/load-balancer';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'development'}` });
 
@@ -13,13 +14,15 @@ export type Configuration = {
     registry?: {
         // RATE IN SECONDS
         heartbeat_rate: number
-    }
+    },
+    balancer?: LoadBalancerType | null
 }
 
 export const apiGatewayConfig: Configuration = {
     server: {
         port: parseInt(getEnvironmentVariable("API_GATEWAY_PORT", false, "8080") as string)
-    }
+    },
+    balancer: LoadBalancerType[getEnvironmentVariable("SERVICE_REGISTRY_BALANCER_METHOD", false, "RoundRobin") as keyof typeof LoadBalancerType]
 }
 
 export const serviceRegistryConfig: Configuration = {

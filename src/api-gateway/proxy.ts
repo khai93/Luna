@@ -1,14 +1,17 @@
 
 import { Application, RequestHandler, Router } from "express";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import { injectable, inject, scoped, Lifecycle } from "tsyringe";
 import InstanceId from "../common/instanceId";
 import Middleware from "../common/middleware";
 import { Name } from "../common/name";
 import { ServiceInfo } from "../common/serviceInfo";
 import { Status } from "../common/status/status";
+import { LoadBalancerModule } from "../modules/load-balancer/types";
 import { LoggerModule } from "../modules/logger/types";
 import { ServiceModule } from "../modules/service/types";
 import { ApiGatewayServer } from "./server";
+
 
 export type ServiceMethod = {
     serviceInfo: ServiceInfo,
@@ -31,8 +34,9 @@ export class ApiGatewayProxy {
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("OfflineMiddleware") private offlineMiddleware: Middleware,
         @inject("ExpressRouterFunction") private router: Function,
-        @inject("ExpressHttpProxy") private expressHttpProxy: Function,
-        @inject("LoggerModule") private logger: LoggerModule
+        @inject("CreateProxyMiddleware") private _createProxyMiddleware: typeof createProxyMiddleware,
+        @inject("LoggerModule") private logger: LoggerModule,
+        @inject("LoadBalancerModule") private loadBalancerModule: LoadBalancerModule | null
     ) {
         this.logger.log("Api Gateway Proxy Started");
 
@@ -58,19 +62,35 @@ export class ApiGatewayProxy {
 
     }
 
-    private updateServiceProxy(serviceInfo: ServiceInfo) {
+    private async updateServiceProxy(serviceInfo: ServiceInfo) {
         this._router = this.router();
-        
 
+        const getServiceUrl = async (): Promise<string> => {
+            const serviceUrl = await this.loadBalancerModule?.getBalancedServiceUrl(serviceInfo);
+
+            if (serviceUrl) {
+                return Promise.resolve(serviceUrl.toString());
+            } else {
+                this.logger.warn("Load balancer could not find a url for service '" + serviceInfo.raw.name +"'");
+                return Promise.resolve(serviceInfo.value.url.toString());
+            }
+        }
+      
         // TODO: IMPLEMENT STATUS TO IDENTIFY SERVICES THAT CAN NOT TAKE REQUESTS ANYMORE
         let newServiceMethod: ServiceMethod = {
             serviceInfo,
             handler: !serviceInfo.value.status.equals(new Status("DOWN")) ? 
-                     this.expressHttpProxy(serviceInfo.value.url.toString()) :
+                     this._createProxyMiddleware( {
+                        target: serviceInfo.value.url.toString(),
+                        router: getServiceUrl,
+                        pathRewrite: {
+                            ['^/api/' + serviceInfo.value.name.value]: '/'
+                        }
+                     }):
                      this.offlineMiddleware.value
         };
 
-        const serviceMethodIndexFound = this._serviceMethods.findIndex(method => method.serviceInfo.equals(serviceInfo));
+        const serviceMethodIndexFound = this._nonNullServiceMethods().findIndex(method => method.serviceInfo.equals(serviceInfo));
 
        
         if (serviceMethodIndexFound >= 0) {

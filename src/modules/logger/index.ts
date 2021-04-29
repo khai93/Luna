@@ -1,6 +1,7 @@
 import { NodeModule } from "./nodeModule";
+import { tslogModule } from "./tslogModule";
 
 
-const loggerModule = NodeModule;
+const loggerModule = tslogModule;
 
 export default loggerModule;
