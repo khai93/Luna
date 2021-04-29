@@ -29,6 +29,6 @@ export class tslogModule implements LoggerModule {
     }
 
     error(error: Error): void {
-        this.logger.error(error.message);
+        this.logger.trace(error);
     }
 }

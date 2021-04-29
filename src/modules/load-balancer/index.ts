@@ -1,7 +1,7 @@
 import { NoneModule } from './noneModule';
 import { RoundRobinModule } from './roundRobinModule';
 import { LoadBalancerModule } from './types';
-import { WeightedRoundRobinModule } from './weightedRobinModule';
+import { WeightedRoundRobinModule } from './weightedRoundRobinModule';
 
 export enum LoadBalancerType {
     RoundRobin,

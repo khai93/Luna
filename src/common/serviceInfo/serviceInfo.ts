@@ -8,6 +8,7 @@ import Hostname from '../hostname';
 import Port from '../port';
 import Version from '../version';
 import { Status, StatusText } from '../status/status';
+import { BalancerOptions, BalancerOptionsValue } from '../balancerOptions/balancerOptions';
 
 export type ServiceInfoValue = {
     instanceId: InstanceId,
@@ -15,6 +16,7 @@ export type ServiceInfoValue = {
     description: string,
     version: Version,
     url: URL,
+    balancerOptions: BalancerOptions,
     status: Status,
     last_heartbeat: Date,
 }
@@ -25,6 +27,7 @@ export type ServiceInfoRaw = {
     description: string,
     version: number,
     status: string,
+    balancerOptions: BalancerOptionsValue,
     url: string,
     last_heartbeat: number,
 }
@@ -51,6 +54,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             description: obj.description,
             version: new Version(obj.version),
             status: new Status(obj.status),
+            balancerOptions: new BalancerOptions(obj.balancerOptions),
             url: new URL(obj.url),
             last_heartbeat: new Date(Date.now()),
         };
@@ -78,6 +82,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             version: this._value.version.value,
             url: this._value.url.toString(),
             status: StatusText[this._value.status.value],
+            balancerOptions: this._value.balancerOptions.value,
             last_heartbeat: this._value.last_heartbeat.getTime()
         } as ServiceInfoRaw;
     }

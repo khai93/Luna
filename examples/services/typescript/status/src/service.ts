@@ -19,6 +19,9 @@ const data = {
     description: serviceConfig.description,
     version: serviceConfig.version,
     status: "OK",
+    balancerOptions: {
+        weight: 2
+    },
     url: url.toString()
 };
 
@@ -28,6 +31,9 @@ const data2 = {
     description: serviceConfig.description,
     version: serviceConfig.version,
     status: "OK",
+    balancerOptions: {
+        weight: 1
+    },
     url: url2.toString()
 }
 
