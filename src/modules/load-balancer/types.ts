@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import { ServiceInfo } from "../../common/serviceInfo";
 
 export interface LoadBalancerModule {

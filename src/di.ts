@@ -1,15 +1,11 @@
 import { container, Lifecycle } from 'tsyringe';
 import serviceModule from './modules/service';
 import { ServiceModule } from './modules/service/types';
-import express, { Application, RequestHandler, Router } from 'express';
-import config from './config';
+import express from 'express';
 import { apiGatewayConfig, Configuration, serviceRegistryConfig } from './config/config';
-import { ApiGatewayServer } from './api-gateway/server';
 import offlineMiddleware from './api-gateway/middlewares/offline';
 import Middleware from './common/middleware';
 import expressHttpProxy from 'express-http-proxy';
-import { ApiGatewayProxy } from './api-gateway/proxy';
-import { IExecuteable } from './common/interfaces/IExecuteable';
 import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryRoute';
 import ServiceRegistryUpdateRoute from './service-registry/routes/v1/services';
 import cors from 'cors';
@@ -19,9 +15,13 @@ import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
 import { LoadBalancerModule } from './modules/load-balancer/types';
-import loadBalancerModules, { LoadBalancerType } from './modules/load-balancer';
+import loadBalancerModules from './modules/load-balancer';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Logger } from 'tslog';
+import shelljs from 'shelljs';
+const NginxConfFile = require('nginx-conf').NginxConfFile;
+
+import { NginxModule } from './modules/api-gateway/nginxModule';
 
 export { container }
 
@@ -33,6 +33,10 @@ container.register<ServiceModule>("ServiceModule", {
 
 container.register<LoggerModule>("LoggerModule", {
     useClass: loggerModule
+}, { lifecycle: Lifecycle.ContainerScoped });
+
+container.register<NginxModule>("NginxModule", {
+    useClass: NginxModule
 }, { lifecycle: Lifecycle.ContainerScoped });
 
 
@@ -99,7 +103,17 @@ container.register("ExpressGzipFunction", {
 
 container.register("CreateProxyMiddleware", {
     useValue: createProxyMiddleware
-})
+});
+
+
+/** DEPENDENCIES */
+container.register<typeof NginxConfFile>('NginxConf', {
+    useValue: NginxConfFile
+});
+
+container.register<typeof shelljs>('ShellJs', {
+    useValue: shelljs
+});
 
 
 /** VALUES */
