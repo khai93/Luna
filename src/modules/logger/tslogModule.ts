@@ -18,6 +18,7 @@ export class tslogModule implements LoggerModule {
 
     fatal(error: Error): void {
         this.logger.fatal(error);
+        process.exit(1);
     }
 
     log(message: string): void {

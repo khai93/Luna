@@ -37,7 +37,7 @@ export const apiGatewayConfig: Configuration = {
     },
     balancer: LoadBalancerType[getEnvironmentVariable("SERVICE_REGISTRY_BALANCER_METHOD", false, "RoundRobin") as keyof typeof LoadBalancerType],
     nginx: {
-        confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, "/etc/nginx/sites-available/luna-gateway") as string
+        confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, undefined) as string
     }
 }
 

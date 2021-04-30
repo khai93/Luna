@@ -20,6 +20,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Logger } from 'tslog';
 import shelljs from 'shelljs';
 const NginxConfFile = require('nginx-conf').NginxConfFile;
+import fsPromise from 'fs/promises';
 
 import { NginxModule } from './modules/api-gateway/nginxModule';
 
@@ -113,6 +114,10 @@ container.register<typeof NginxConfFile>('NginxConf', {
 
 container.register<typeof shelljs>('ShellJs', {
     useValue: shelljs
+});
+
+container.register<typeof fsPromise>('FsPromise', {
+    useValue: fsPromise
 });
 
 
