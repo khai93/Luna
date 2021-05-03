@@ -2,7 +2,7 @@ import { container, Lifecycle } from 'tsyringe';
 import serviceModule from './modules/service';
 import { ServiceModule } from './modules/service/types';
 import express from 'express';
-import { apiGatewayConfig, Configuration, serviceRegistryConfig } from './config/config';
+import { apiGatewayConfig, ApiGatewayType, Configuration, serviceRegistryConfig } from './config/config';
 import offlineMiddleware from './api-gateway/middlewares/offline';
 import Middleware from './common/middleware';
 import expressHttpProxy from 'express-http-proxy';
@@ -16,17 +16,24 @@ import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
 import { LoadBalancerModule } from './modules/load-balancer/types';
 import loadBalancerModules from './modules/load-balancer';
+import nginxConfigModule from './modules/nginx-config';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Logger } from 'tslog';
 import shelljs from 'shelljs';
 const NginxConfFile = require('nginx-conf').NginxConfFile;
 import fsPromise from 'fs/promises';
 
-import { NginxModule } from './modules/api-gateway/nginxModule';
+import apiGatewayModules from './modules/api-gateway';
+import { NginxConfigModule } from './modules/nginx-config/types';
+import { IExecuteable } from './common/interfaces/IExecuteable';
 
 export { container }
 
 /** MODULES */
+
+container.register<NginxConfigModule>("NginxConfigModule", {
+    useClass: nginxConfigModule
+}, { lifecycle: Lifecycle.Singleton });
 
 container.register<ServiceModule>("ServiceModule", {
     useClass: serviceModule
@@ -36,13 +43,8 @@ container.register<LoggerModule>("LoggerModule", {
     useClass: loggerModule
 }, { lifecycle: Lifecycle.ContainerScoped });
 
-container.register<NginxModule>("NginxModule", {
-    useClass: NginxModule
-}, { lifecycle: Lifecycle.ContainerScoped });
-
-
 /**
- * Injects the module that is found with the same enum as the config
+ * Injects the modules that is found with the same enum as the config
  */
 
 let loadBalancerModule = loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module;
@@ -54,6 +56,16 @@ if (loadBalancerModule == null) {
 container.register<LoadBalancerModule>("LoadBalancerModule", {
     useClass: loadBalancerModule
 }, { lifecycle: Lifecycle.ContainerScoped })
+
+let apiGatewayModule = apiGatewayModules.find(moduleType => moduleType.type === apiGatewayConfig.apiGateway)?.module;
+
+if (apiGatewayModule == null) {
+    throw new Error(`The Api Gateway Type '${apiGatewayConfig.balancer}' in config does not match any of the supported types.`);
+}
+
+container.register<IExecuteable>("ApiGatewayModule", {
+    useClass: apiGatewayModule
+}, { lifecycle: Lifecycle.ContainerScoped });
 
 
 /** MIDDLEWARES */
@@ -138,3 +150,7 @@ container.register<Function>("ExpressBodyParser", {
 container.register<Logger>("TslogLogger", {
     useValue: new Logger()
 });
+
+container.register<string>("PathToNginxConfigFile",{
+    useValue: apiGatewayConfig.nginx?.confFilePath as string
+}); 

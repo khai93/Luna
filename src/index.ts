@@ -5,6 +5,7 @@ import { ApiGatewayServer } from './api-gateway/server';
 import { ServiceRegistryServer } from './service-registry/server';
 import { apiGatewayConfig, ApiGatewayType } from './config/config';
 import { NginxModule } from './modules/api-gateway/nginxModule';
+import { IExecuteable } from './common/interfaces/IExecuteable';
 
 const registryServerInstance = container.resolve(ServiceRegistryServer);
 registryServerInstance.start();
@@ -14,11 +15,10 @@ if (apiGatewayConfig.apiGateway === ApiGatewayType.Luna) {
     gatewayServerInstance.start();
 
     container.resolve(ApiGatewayProxy);
-}
-
-if (apiGatewayConfig.apiGateway === ApiGatewayType.Nginx) {
-    const nginxInstance: NginxModule = container.resolve("NginxModule");
-    nginxInstance.execute();
+} else {
+    const gatewayInstance: IExecuteable = container.resolve("ApiGatewayModule");
+    
+    gatewayInstance.execute();
 }
 
 

@@ -9,26 +9,29 @@ import InstanceId from "../../common/instanceId";
 import { Configuration } from "../../config/config";
 import fsPromise from 'fs/promises';
 import { Name } from "../../common/name";
+import { NginxConfigContext, NginxConfigModule } from "../nginx-config/types";
 
 export type NginxInstanceData = {
     serviceName: Name,
     serverBlockLocationIndex: number
 }
 
+/**
+ * CLEAN UP
+ */
+
 @injectable()
 export class NginxModule implements IExecuteable {
     private _isServerBlockInsideHttpBlock: boolean | null = null;
-    private _instances: NginxInstanceData[] = [];
-    private _conf: NginxConfFile | undefined;
-    private _servicesAddingAmount = 0;
+    private _serverContext: NginxConfigContext | undefined;
 
     constructor(
         @inject("LoggerModule") private logger: LoggerModule,
-        @inject("NginxConf") private nginxConf: NginxConfFile,
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("ShellJs") private shell: typeof shellJS,
         @inject("ApiGatewayConfig") private apiGatewayConfig: Configuration,
-        @inject("FsPromise") private fs: typeof fsPromise
+        @inject("FsPromise") private fs: typeof fsPromise,
+        @inject("NginxConfigModule") private nginxConfigModule: NginxConfigModule
     ) {}
 
     async execute(): Promise<void> {
@@ -50,9 +53,9 @@ export class NginxModule implements IExecuteable {
             this.logger.fatal(new NginxModuleError("Root permissions are required to use nginx as the api gateway, Please run luna with 'sudo' or as root."));
         }
 
-        this._conf = await this.getConfFile();
-        this.flushTimer();
-        this._isServerBlockInsideHttpBlock = await this.validateServerBlockLocation() as boolean;
+  
+        this._serverContext = await this.getServerContext();
+        
         this.setUpListeners();
     }
 
@@ -68,150 +71,92 @@ export class NginxModule implements IExecuteable {
         this.serviceModule.on('add', async (addedServiceInfo: ServiceInfo) => {
             this.logger.log(`Service [${addedServiceInfo.value.name.value}] registered.`);
 
-            await this.appendInstanceToServiceUpstream(addedServiceInfo);
-            
-            const serviceData = this._instances.find(instance => instance.serviceName.equals(addedServiceInfo.value.name));
-            
-            if (serviceData == null) {
-                await this.addServiceLocationBlock(addedServiceInfo);
-            }
+            this.appendInstanceToServiceUpstream(addedServiceInfo);
+            this.addServiceLocationBlock(addedServiceInfo);
         });
 
-        process.on("beforeExit", () => {
-            this.flushConfFile();
-        });
-    }
 
-    private flushTimer() {
-        setInterval(() => {
-            this.flushConfFile();
-        }, 2000);
-    }
-
-    private flushConfFile() {
-        this._conf?.flush(async (errs) => {
-            if (errs) errs.map(this.logger.error);
-            this.logger.info("Flushed Config File");
-            this._conf = await this.getConfFile();
-        });
     }
 
     /**
-     * Returns the NginxConfFile from nginx-conf npm package
-     * 
-     * IMPORTANT: REMEMBER TO FLUSH THE RETURNED CONF STREAM
-     * 
-     * @returns NginxConfFile
+     * Looks for the first server context, 
+     * either inside/outside a http context
      */
-    private async getConfFile(): Promise<NginxConfFile> {
-        return new Promise((resolve, reject) => {
-            const configFilePath = this.apiGatewayConfig.nginx?.confFilePath as string;
+    private async getServerContext(): Promise<NginxConfigContext | undefined> {
+        if (await this.nginxConfigModule.getRootContext() == null) {
+            throw new NginxModuleError("Root context could not be found in the nginx config path.");
+        }
 
-            this.fs.open(configFilePath, 'r')
-                .then(() => {
-                    NginxConfFile.create(configFilePath, (err, conf) => {
-                        if (err || !conf) {
-                            this.logger.fatal(err as Error);
-                        }
-                        
-                        return resolve(conf as NginxConfFile);
-                    });
-                })
-                .catch(e => {
-                    // file does not exist
-                    if ((e.code && e.code === 'ENOENT') && (e.errno && e.errno === -2)) {
-
-                        this.logger.fatal(e);
-                        process.exit(1);
-                    }
-                })
-        });
-    }
-
-    /**
-     * Validates the conf file provided in the env variable 'NGINX_CONFIG_FILE_PATH'
-     * Mainly looking for the server block
-     * @returns boolean server block is inside a http block
-     * 
-     */
-    private async validateServerBlockLocation(): Promise<boolean | void> {
-        if (this._conf?.nginx.http) {
-            if(!this._conf?.nginx.http.some(httpBlock => httpBlock.server != null)) {
-                this.logger.fatal(new NginxModuleError(`Could not find a server block in a http block in '${this.apiGatewayConfig.nginx?.confFilePath}'`));
-            }
-        } else if (this._conf?.nginx.server != null) {
-            this._conf?.flush((errs) => {
-                if (errs) errs.map(this.logger.error);
-                return Promise.resolve(true);
-            });
+        const rootServers = this.nginxConfigModule.getContexts('server');
+        
+        if (rootServers && rootServers.length > 0) {
+            // server context
+            return rootServers[0];
         } else {
-            this._conf?.flush((errs) => {
-                if (errs) errs.map(this.logger.error);
-                this.logger.fatal(new NginxModuleError(`Could not find a server block in '${this.apiGatewayConfig.nginx?.confFilePath}'`));
-                return Promise.reject();
+            const httpContext = this.nginxConfigModule.getContexts('http');
+            
+            return httpContext && 
+                   httpContext.find(context => context.getContexts('server').length > 0)
+                   ?.getContexts('server')[0]
+        }
+    }
+
+    private appendInstanceToServiceUpstream(instance: ServiceInfo) {
+        let serviceUpstreamContext = this.nginxConfigModule?.getContexts('upstream')
+                                                           ?.find(context => context.value === this.getServiceUpstreamKey(instance));
+        
+        if (serviceUpstreamContext == null) {
+            serviceUpstreamContext = this.nginxConfigModule?.addContext('upstream', this.getServiceUpstreamKey(instance))
+                                                         .getContexts('upstream')
+                                                         .find(context => context.value === this.getServiceUpstreamKey(instance));
+        }                                                   
+
+        if (serviceUpstreamContext?.getComments().length as number < 1) {
+            serviceUpstreamContext?.addComment("Managed By Luna");
+        }
+
+        const instanceAlreadyAdded = serviceUpstreamContext?.getDirectives('server')
+                               ?.some(directive => directive.params[0] === instance.value.url.host);
+        
+        if (!instanceAlreadyAdded) {
+            serviceUpstreamContext?.addDirective({
+                name: 'server',
+                params: [instance.value.url.host]
+            });
+        };
+    }
+
+    private addServiceLocationBlock(serviceInfo: ServiceInfo): void {
+        const serverBlock = this._serverContext;
+        const serviceName = serviceInfo.raw().name;
+
+        let serviceLocationContext = serverBlock?.getContexts('location')
+                                                 .find(context => context.value === '/' + serviceName);
+
+        if (serviceLocationContext == null) {
+            serviceLocationContext = serverBlock?.addContext('location', '/' + serviceName)
+                        .getContexts('location')
+                        .find(context => context.value === '/' + serviceName);
+        };
+
+        if (serviceLocationContext?.getComments().length as number < 1) {
+            serviceLocationContext?.addComment("Managed By Luna");
+        }
+
+        const serviceLocationDirectiveExists = serviceLocationContext?.getDirectives('proxy_pass')
+                                                                      ?.some(directive => directive.params[0] === `http://${this.getServiceUpstreamKey(serviceInfo)}`)
+
+        if (!serviceLocationDirectiveExists) {
+            serviceLocationContext?.addDirective({
+                name: "proxy_pass", 
+                params: [`http://${this.getServiceUpstreamKey(serviceInfo)}`]
             });
         }
-    }
-
-    private async appendInstanceToServiceUpstream(instance: ServiceInfo): Promise<void> {
-        const serviceUpstreamExists = this._conf?.nginx?.upstream?.some(block => block._value === this.getServiceUpstreamKey(instance));
-        
-        // create upstream if it does not exist for the instance's service
-        if (!serviceUpstreamExists) {
-            const added = this._conf?.nginx._add('upstream', this.getServiceUpstreamKey(instance));
-        }
-
-        const serviceUpstreamBlock = this._conf?.nginx?.upstream?.find(block => block._value === this.getServiceUpstreamKey(instance));
-
-        if (serviceUpstreamBlock?._comments.length as number <= 1) {
-            serviceUpstreamBlock?._comments.push(" == Managed by Luna == ");
-            serviceUpstreamBlock?._comments.push(" DO NOT CHANGE THESE VALUES ");
-        }
-
-        if (serviceUpstreamBlock != null) {
-            if (!serviceUpstreamBlock.server?.find(block => block._value === instance.value.url.host)) {
-                serviceUpstreamBlock._add('server', instance.value.url.host);
-            }
-        } else {
-            this.logger.warn("Could not find insance's service upstream block while attempting to append.");
-        }
-        
-        return Promise.resolve();
-    }
-
-    private async addServiceLocationBlock(serviceInfo: ServiceInfo): Promise<void> {
-        const serverBlock = this._isServerBlockInsideHttpBlock ?
-                            this._conf?.nginx.http?.find(httpBlock => httpBlock.server != null) :
-                            this._conf?.nginx.server && this._conf?.nginx.server[0]
-        
-
-        const serviceLocationExists = serverBlock?.location?.some(block => block._value === "/" + serviceInfo.raw().name);
-
-        if (!serviceLocationExists) {
-            serverBlock?._add('location', '/' + serviceInfo.raw().name);
-            const serverBlockIndex = (serverBlock?.location?.length as number) - 1;
-
-            const block = serverBlock?.location?.find(block => block._value === "/" + serviceInfo.raw().name);
-
-            if (block?._comments.length as number <= 1) {
-                block?._comments.push(" == Managed by Luna == ");
-                block?._comments.push(" DO NOT CHANGE THESE VALUES ");
-            }
-
-            block?._add('proxy_pass', `http://${this.getServiceUpstreamKey(serviceInfo)}`);
-        
-            this._instances.push({
-                serviceName: serviceInfo.value.name,
-                serverBlockLocationIndex: serverBlockIndex || 0
-            });
-        }
-    }
+    }       
 
     private getServiceUpstreamKey(serviceInfo: ServiceInfo): string {
         return `luna_service_${serviceInfo.raw().name}`;
     }
-
-
 }
 
 export class NginxModuleError extends Error {
