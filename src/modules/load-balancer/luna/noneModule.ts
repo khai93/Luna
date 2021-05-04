@@ -1,7 +1,7 @@
 import { inject, injectable } from "tsyringe";
-import { ServiceInfo } from "../../common/serviceInfo";
-import { LoggerModule } from "../logger/types";
-import { LoadBalancerModule } from "./types";
+import { ServiceInfo } from "../../../common/serviceInfo";
+import { LoggerModule } from "../../logger/types";
+import { LoadBalancerModule } from "../types";
 
 @injectable()
 export class NoneModule implements LoadBalancerModule {
@@ -11,7 +11,7 @@ export class NoneModule implements LoadBalancerModule {
         this.logger.info("Load Balancer loaded with None method.");
     }
 
-    getBalancedServiceUrl(serviceInfo: ServiceInfo): Promise<URL> {
+    balanceService(serviceInfo: ServiceInfo): Promise<URL> {
         return new Promise((resolve, reject) => {
             return resolve(serviceInfo.value.url);
         });

@@ -1,7 +1,12 @@
 import dotenv from 'dotenv';
-import { LoadBalancerType } from '../modules/load-balancer';
+import { LoadBalancerType } from '../modules/load-balancer/types';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'development'}` });
+
+export enum ApiGatewayType {
+    Luna,
+    Nginx
+}
 
 export type Configuration = {
     server: {
@@ -15,14 +20,25 @@ export type Configuration = {
         // RATE IN SECONDS
         heartbeat_rate: number
     },
-    balancer?: LoadBalancerType | null
+    balancer?: LoadBalancerType | null,
+    apiGateway?: ApiGatewayType | ApiGatewayType.Luna,
+    nginx?: {
+        confFilePath: string
+    }
 }
 
 export const apiGatewayConfig: Configuration = {
+    /**
+    * Decides whether or not to use Luna's built-in apigateway or nginx, the default is luna
+    */
+    apiGateway: ApiGatewayType[getEnvironmentVariable("API_GATEWAY", false, "Luna") as keyof typeof ApiGatewayType],
     server: {
         port: parseInt(getEnvironmentVariable("API_GATEWAY_PORT", false, "8080") as string)
     },
-    balancer: LoadBalancerType[getEnvironmentVariable("SERVICE_REGISTRY_BALANCER_METHOD", false, "RoundRobin") as keyof typeof LoadBalancerType]
+    balancer: LoadBalancerType[getEnvironmentVariable("SERVICE_REGISTRY_BALANCER_METHOD", false, "RoundRobin") as keyof typeof LoadBalancerType],
+    nginx: {
+        confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, undefined) as string
+    }
 }
 
 export const serviceRegistryConfig: Configuration = {

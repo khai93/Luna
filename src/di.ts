@@ -1,15 +1,11 @@
 import { container, Lifecycle } from 'tsyringe';
 import serviceModule from './modules/service';
 import { ServiceModule } from './modules/service/types';
-import express, { Application, RequestHandler, Router } from 'express';
-import config from './config';
-import { apiGatewayConfig, Configuration, serviceRegistryConfig } from './config/config';
-import { ApiGatewayServer } from './api-gateway/server';
-import offlineMiddleware from './api-gateway/middlewares/offline';
+import express from 'express';
+import { apiGatewayConfig, ApiGatewayType, Configuration, serviceRegistryConfig } from './config/config';
+import offlineMiddleware from './modules/api-gateway/luna/api-gateway/middlewares/offline';
 import Middleware from './common/middleware';
 import expressHttpProxy from 'express-http-proxy';
-import { ApiGatewayProxy } from './api-gateway/proxy';
-import { IExecuteable } from './common/interfaces/IExecuteable';
 import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryRoute';
 import ServiceRegistryUpdateRoute from './service-registry/routes/v1/services';
 import cors from 'cors';
@@ -18,14 +14,26 @@ import { LoggerModule } from './modules/logger/types';
 import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
-import { LoadBalancerModule } from './modules/load-balancer/types';
-import loadBalancerModules, { LoadBalancerType } from './modules/load-balancer';
+import { LoadBalancerModule, LoadBalancerType } from './modules/load-balancer/types';
+import loadBalancerSubModules from './modules/load-balancer';
+import nginxConfigModule from './modules/nginx-config';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Logger } from 'tslog';
+import shelljs from 'shelljs';
+const NginxConfFile = require('nginx-conf').NginxConfFile;
+import fsPromise from 'fs/promises';
+
+import apiGatewayModules from './modules/api-gateway';
+import { NginxConfigModule } from './modules/nginx-config/types';
+import { IExecuteable } from './common/interfaces/IExecuteable';
 
 export { container }
 
 /** MODULES */
+
+container.register<NginxConfigModule>("NginxConfigModule", {
+    useClass: nginxConfigModule
+}, { lifecycle: Lifecycle.Singleton });
 
 container.register<ServiceModule>("ServiceModule", {
     useClass: serviceModule
@@ -35,20 +43,31 @@ container.register<LoggerModule>("LoggerModule", {
     useClass: loggerModule
 }, { lifecycle: Lifecycle.ContainerScoped });
 
-
 /**
- * Injects the module that is found with the same enum as the config
+ * Injects the modules that is found with the same enum as the config
  */
 
-let loadBalancerModule = loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module;
+let loadBalancerModule = loadBalancerSubModules.find(submodule => submodule.gateway === apiGatewayConfig.apiGateway)?.balancerModules
+                                               .find(modules => modules.type === apiGatewayConfig.balancer)?.module;
+                                               
 
 if (loadBalancerModule == null) {
-    throw new Error(`The Load balancer Type '${apiGatewayConfig.balancer}' in config does not match any of the supported types. To not use a load balancer, use 'None' type.`);
+    throw new Error(`The Load balancer Type '${LoadBalancerType[apiGatewayConfig.balancer as number]}' in config does not match any of the supported types for gateway ${ApiGatewayType[apiGatewayConfig.apiGateway as number]}. To use the default load balancer for the gateway, use 'Default' type.`);
 }
 
-container.register<LoadBalancerModule>("LoadBalancerModule", {
+container.register<typeof loadBalancerModule>("LoadBalancerModule", {
     useClass: loadBalancerModule
-}, { lifecycle: Lifecycle.ContainerScoped })
+}, { lifecycle: Lifecycle.Singleton })
+
+let apiGatewayModule = apiGatewayModules.find(moduleType => moduleType.type === apiGatewayConfig.apiGateway)?.module;
+
+if (apiGatewayModule == null) {
+    throw new Error(`The Api Gateway Type '${ApiGatewayType[apiGatewayConfig.apiGateway as number]}' in config does not match any of the supported types.`);
+}
+
+container.register<IExecuteable>("ApiGatewayModule", {
+    useClass: apiGatewayModule
+}, { lifecycle: Lifecycle.ContainerScoped });
 
 
 /** MIDDLEWARES */
@@ -99,7 +118,21 @@ container.register("ExpressGzipFunction", {
 
 container.register("CreateProxyMiddleware", {
     useValue: createProxyMiddleware
-})
+});
+
+
+/** DEPENDENCIES */
+container.register<typeof NginxConfFile>('NginxConf', {
+    useValue: NginxConfFile
+});
+
+container.register<typeof shelljs>('ShellJs', {
+    useValue: shelljs
+});
+
+container.register<typeof fsPromise>('FsPromise', {
+    useValue: fsPromise
+});
 
 
 /** VALUES */
@@ -119,3 +152,7 @@ container.register<Function>("ExpressBodyParser", {
 container.register<Logger>("TslogLogger", {
     useValue: new Logger()
 });
+
+container.register<string>("PathToNginxConfigFile",{
+    useValue: apiGatewayConfig.nginx?.confFilePath as string
+}); 
