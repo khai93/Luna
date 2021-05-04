@@ -1,32 +1,24 @@
-import { NoneModule } from './noneModule';
-import { RoundRobinModule } from './roundRobinModule';
-import { LoadBalancerModule } from './types';
-import { WeightedRoundRobinModule } from './weightedRoundRobinModule';
+import lunaBalancerModules from './luna';
+import nginxbalancerModules from './nginx';
+import { LoadBalancerModule, LoadBalancerType,  LoadBalancerTypeListItem} from './types';
 
-export enum LoadBalancerType {
-    RoundRobin,
-    WeightedRoundRobin,
-    None
+import { ApiGatewayType } from '../../config/config';
+
+export type ApiGatewayLoadBalancerSubModules = {
+    gateway: ApiGatewayType,
+    balancerModules: LoadBalancerTypeListItem[]
 }
 
-export type LoadBalancerTypeListItem = {
-    type: LoadBalancerType,
-    module: any
-}
-
-const modules: LoadBalancerTypeListItem[] = [
+const modules: ApiGatewayLoadBalancerSubModules[] = [
     {
-        type: LoadBalancerType.RoundRobin,
-        module: RoundRobinModule
+        gateway: ApiGatewayType.Luna,
+        balancerModules: lunaBalancerModules
     },
     {
-        type: LoadBalancerType.WeightedRoundRobin,
-        module: WeightedRoundRobinModule
-    },
-    {
-        type: LoadBalancerType.None,
-        module: NoneModule
+        gateway: ApiGatewayType.Nginx,
+        balancerModules: nginxbalancerModules
     }
 ]
+
 
 export default modules;

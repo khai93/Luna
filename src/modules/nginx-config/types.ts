@@ -16,12 +16,21 @@ export interface NginxConfigContext extends EventEmitter {
     getComments(): string[];
     addDirective(directive: NginxConfigDirective): NginxConfigContext;
     getDirectives(name: string): NginxConfigDirective[] | undefined;
+    editDirective(directiveToEdit: NginxConfigDirective, changes: NginxConfigDirective): NginxConfigContext | undefined;
 }   
 
 export interface NginxConfigModule {
     getRootContext(): Promise<NginxConfigContext>;
     getContexts(name: string, parentContext?: NginxConfigContext): NginxConfigContext[] | undefined;
     addContext(name: string, value: string, parentContext?: NginxConfigContext): NginxConfigContext;
+    /**
+     * Looks for the first server context, 
+     * either inside/outside a http context
+     */
+    getServerContext(): Promise<NginxConfigContext | undefined>;
+    getServiceUpstreamContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
+    getServiceLocationContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
+    getServiceUpstreamKey(serviceInfo: ServiceInfo): string;
 }
 
 export interface NginxConfigContextEvents {

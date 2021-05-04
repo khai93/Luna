@@ -1,9 +1,9 @@
 import { inject, injectable } from "tsyringe";
-import { Name } from "../../common/name";
-import { ServiceInfo } from "../../common/serviceInfo";
-import { LoggerModule } from "../logger/types";
-import { ServiceModule } from "../service/types";
-import { LoadBalancerModule, LoadBalancerModuleError } from "./types";
+import { Name } from "../../../common/name";
+import { ServiceInfo } from "../../../common/serviceInfo";
+import { LoggerModule } from "../../logger/types";
+import { ServiceModule } from "../../service/types";
+import { LoadBalancerModule, LoadBalancerModuleError } from "../types";
 
 @injectable()
 export class WeightedRoundRobinModule implements LoadBalancerModule {
@@ -14,7 +14,7 @@ export class WeightedRoundRobinModule implements LoadBalancerModule {
         this.logger.info("Load Balancer loaded with Weighted Round Robin method.");
     }
 
-    getBalancedServiceUrl(serviceInfo: ServiceInfo): Promise<URL> {
+    balanceService(serviceInfo: ServiceInfo): Promise<URL> {
         return new Promise(async (resolve, reject) => {
             const serviceInstances = await this.serviceModule.findAllByName(serviceInfo.value.name);
 

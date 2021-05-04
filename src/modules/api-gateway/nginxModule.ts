@@ -10,7 +10,7 @@ import { Configuration } from "../../config/config";
 import fsPromise from 'fs/promises';
 import { Name } from "../../common/name";
 import { NginxConfigContext, NginxConfigModule } from "../nginx-config/types";
-
+import { LoadBalancerModule } from "../load-balancer/types";
 export type NginxInstanceData = {
     serviceName: Name,
     serverBlockLocationIndex: number
@@ -22,17 +22,17 @@ export type NginxInstanceData = {
 
 @injectable()
 export class NginxModule implements IExecuteable {
-    private _isServerBlockInsideHttpBlock: boolean | null = null;
-    private _serverContext: NginxConfigContext | undefined;
+    private _reloading = false;
 
     constructor(
         @inject("LoggerModule") private logger: LoggerModule,
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("ShellJs") private shell: typeof shellJS,
         @inject("ApiGatewayConfig") private apiGatewayConfig: Configuration,
-        @inject("FsPromise") private fs: typeof fsPromise,
-        @inject("NginxConfigModule") private nginxConfigModule: NginxConfigModule
-    ) {}
+        @inject("LoadBalancerModule") private loadBalancerModule: LoadBalancerModule
+    ) {
+        this.logger.log("Nginx Gateway Selected as Gateway.");
+    }
 
     async execute(): Promise<void> {
         this.logger.info("Setting up Nginx as the Api Gateway.");
@@ -53,9 +53,6 @@ export class NginxModule implements IExecuteable {
             this.logger.fatal(new NginxModuleError("Root permissions are required to use nginx as the api gateway, Please run luna with 'sudo' or as root."));
         }
 
-  
-        this._serverContext = await this.getServerContext();
-        
         this.setUpListeners();
     }
 
@@ -68,94 +65,34 @@ export class NginxModule implements IExecuteable {
             this.logger.log(`Service [${removedInstanceId.raw().serviceName}] deregistered.`);
         });
 
-        this.serviceModule.on('add', async (addedServiceInfo: ServiceInfo) => {
-            this.logger.log(`Service [${addedServiceInfo.value.name.value}] registered.`);
-
-            this.appendInstanceToServiceUpstream(addedServiceInfo);
-            this.addServiceLocationBlock(addedServiceInfo);
+        this.serviceModule.on('add', (addedInstance: ServiceInfo) => {
+            this.logger.log(`Service [${addedInstance.value.name.value}] registered.`);
+            this.loadBalancerModule.balanceService(addedInstance);
+            this.requestNginxReload();
         });
-
-
     }
 
-    /**
-     * Looks for the first server context, 
-     * either inside/outside a http context
-     */
-    private async getServerContext(): Promise<NginxConfigContext | undefined> {
-        if (await this.nginxConfigModule.getRootContext() == null) {
-            throw new NginxModuleError("Root context could not be found in the nginx config path.");
+    private requestNginxReload() {
+        if (this._reloading === false) {
+            this._reloading = true;
+            this.logger.info('Reloading Nginx service in 3 seconds.');
+
+            setTimeout(() => {
+                if (this.shell.exec('sudo nginx -t', { silent: true }).code != 0) {
+                    this.logger.error(new NginxModuleError("Nginx Config File Test: Failure"));
+                } else {
+                    this.logger.info("Nginx Config File Test: Success");
+                }
+
+                if (this.shell.exec('sudo service nginx reload', { silent: true }).code != 0) {
+                    this.logger.error(new NginxModuleError("Nginx Service Reload: Failure"));
+                } else {
+                    this.logger.info("Nginx Service Reload: Success");
+                }
+
+                this._reloading = false;
+            }, 3000);
         }
-
-        const rootServers = this.nginxConfigModule.getContexts('server');
-        
-        if (rootServers && rootServers.length > 0) {
-            // server context
-            return rootServers[0];
-        } else {
-            const httpContext = this.nginxConfigModule.getContexts('http');
-            
-            return httpContext && 
-                   httpContext.find(context => context.getContexts('server').length > 0)
-                   ?.getContexts('server')[0]
-        }
-    }
-
-    private appendInstanceToServiceUpstream(instance: ServiceInfo) {
-        let serviceUpstreamContext = this.nginxConfigModule?.getContexts('upstream')
-                                                           ?.find(context => context.value === this.getServiceUpstreamKey(instance));
-        
-        if (serviceUpstreamContext == null) {
-            serviceUpstreamContext = this.nginxConfigModule?.addContext('upstream', this.getServiceUpstreamKey(instance))
-                                                         .getContexts('upstream')
-                                                         .find(context => context.value === this.getServiceUpstreamKey(instance));
-        }                                                   
-
-        if (serviceUpstreamContext?.getComments().length as number < 1) {
-            serviceUpstreamContext?.addComment("Managed By Luna");
-        }
-
-        const instanceAlreadyAdded = serviceUpstreamContext?.getDirectives('server')
-                               ?.some(directive => directive.params[0] === instance.value.url.host);
-        
-        if (!instanceAlreadyAdded) {
-            serviceUpstreamContext?.addDirective({
-                name: 'server',
-                params: [instance.value.url.host]
-            });
-        };
-    }
-
-    private addServiceLocationBlock(serviceInfo: ServiceInfo): void {
-        const serverBlock = this._serverContext;
-        const serviceName = serviceInfo.raw().name;
-
-        let serviceLocationContext = serverBlock?.getContexts('location')
-                                                 .find(context => context.value === '/' + serviceName);
-
-        if (serviceLocationContext == null) {
-            serviceLocationContext = serverBlock?.addContext('location', '/' + serviceName)
-                        .getContexts('location')
-                        .find(context => context.value === '/' + serviceName);
-        };
-
-        if (serviceLocationContext?.getComments().length as number < 1) {
-            serviceLocationContext?.addComment("Managed By Luna");
-        }
-
-        const serviceLocationDirectiveExists = serviceLocationContext?.getDirectives('proxy_pass')
-                                                                      ?.some(directive => directive.params[0] === `http://${this.getServiceUpstreamKey(serviceInfo)}`)
-
-        if (!serviceLocationDirectiveExists) {
-            serviceLocationContext?.addDirective({
-                name: "proxy_pass", 
-                params: [`http://${this.getServiceUpstreamKey(serviceInfo)}`]
-            });
-        }
-    }       
-
-    private getServiceUpstreamKey(serviceInfo: ServiceInfo): string {
-        return `luna_service_${serviceInfo.raw().name}`;
     }
 }
 

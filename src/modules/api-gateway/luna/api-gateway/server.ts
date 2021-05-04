@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import { inject, singleton } from 'tsyringe';
-import { Configuration } from '../config/config';
-import { LoggerModule } from '../modules/logger/types';
+import { Configuration } from '../../../../config/config';
+import { LoggerModule } from '../../../logger/types';
 
 @singleton()
 export class ApiGatewayServer {

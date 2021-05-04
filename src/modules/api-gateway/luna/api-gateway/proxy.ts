@@ -2,14 +2,14 @@
 import { Application, RequestHandler, Router } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import { injectable, inject, scoped, Lifecycle } from "tsyringe";
-import InstanceId from "../common/instanceId";
-import Middleware from "../common/middleware";
-import { Name } from "../common/name";
-import { ServiceInfo } from "../common/serviceInfo";
-import { Status } from "../common/status/status";
-import { LoadBalancerModule } from "../modules/load-balancer/types";
-import { LoggerModule } from "../modules/logger/types";
-import { ServiceModule } from "../modules/service/types";
+import InstanceId from "../../../../common/instanceId";
+import Middleware from "../../../../common/middleware";
+import { Name } from "../../../../common/name";
+import { ServiceInfo } from "../../../../common/serviceInfo";
+import { Status } from "../../../../common/status/status";
+import { LoadBalancerModule } from "../../../load-balancer/types";
+import { LoggerModule } from "../../../logger/types";
+import { ServiceModule } from "../../../service/types";
 import { ApiGatewayServer } from "./server";
 
 
@@ -66,7 +66,7 @@ export class ApiGatewayProxy {
         this._router = this.router();
 
         const getServiceUrl = async (): Promise<string> => {
-            const serviceUrl = await this.loadBalancerModule?.getBalancedServiceUrl(serviceInfo);
+            const serviceUrl = await this.loadBalancerModule?.balanceService(serviceInfo);
 
             if (serviceUrl) {
                 return Promise.resolve(serviceUrl.toString());

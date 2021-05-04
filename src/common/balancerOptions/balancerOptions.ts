@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import { apiGatewayConfig, Configuration } from "../../config/config";
-import { LoadBalancerType } from "../../modules/load-balancer";
+import { LoadBalancerType } from "../../modules/load-balancer/types";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 

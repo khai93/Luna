@@ -3,7 +3,7 @@ import serviceModule from './modules/service';
 import { ServiceModule } from './modules/service/types';
 import express from 'express';
 import { apiGatewayConfig, ApiGatewayType, Configuration, serviceRegistryConfig } from './config/config';
-import offlineMiddleware from './api-gateway/middlewares/offline';
+import offlineMiddleware from './modules/api-gateway/luna/api-gateway/middlewares/offline';
 import Middleware from './common/middleware';
 import expressHttpProxy from 'express-http-proxy';
 import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryRoute';
@@ -14,8 +14,8 @@ import { LoggerModule } from './modules/logger/types';
 import loggerModule from './modules/logger';
 import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
 import compression from 'compression';
-import { LoadBalancerModule } from './modules/load-balancer/types';
-import loadBalancerModules from './modules/load-balancer';
+import { LoadBalancerModule, LoadBalancerType } from './modules/load-balancer/types';
+import loadBalancerSubModules from './modules/load-balancer';
 import nginxConfigModule from './modules/nginx-config';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Logger } from 'tslog';
@@ -47,20 +47,22 @@ container.register<LoggerModule>("LoggerModule", {
  * Injects the modules that is found with the same enum as the config
  */
 
-let loadBalancerModule = loadBalancerModules.find(moduleType => moduleType.type === apiGatewayConfig.balancer)?.module;
+let loadBalancerModule = loadBalancerSubModules.find(submodule => submodule.gateway === apiGatewayConfig.apiGateway)?.balancerModules
+                                               .find(modules => modules.type === apiGatewayConfig.balancer)?.module;
+                                               
 
 if (loadBalancerModule == null) {
-    throw new Error(`The Load balancer Type '${apiGatewayConfig.balancer}' in config does not match any of the supported types. To not use a load balancer, use 'None' type.`);
+    throw new Error(`The Load balancer Type '${LoadBalancerType[apiGatewayConfig.balancer as number]}' in config does not match any of the supported types for gateway ${ApiGatewayType[apiGatewayConfig.apiGateway as number]}. To use the default load balancer for the gateway, use 'Default' type.`);
 }
 
-container.register<LoadBalancerModule>("LoadBalancerModule", {
+container.register<typeof loadBalancerModule>("LoadBalancerModule", {
     useClass: loadBalancerModule
-}, { lifecycle: Lifecycle.ContainerScoped })
+}, { lifecycle: Lifecycle.Singleton })
 
 let apiGatewayModule = apiGatewayModules.find(moduleType => moduleType.type === apiGatewayConfig.apiGateway)?.module;
 
 if (apiGatewayModule == null) {
-    throw new Error(`The Api Gateway Type '${apiGatewayConfig.balancer}' in config does not match any of the supported types.`);
+    throw new Error(`The Api Gateway Type '${ApiGatewayType[apiGatewayConfig.apiGateway as number]}' in config does not match any of the supported types.`);
 }
 
 container.register<IExecuteable>("ApiGatewayModule", {

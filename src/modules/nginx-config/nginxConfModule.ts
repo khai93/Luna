@@ -4,6 +4,7 @@ import EventEmitter from "node:events";
 import TypedEmitter from "typed-emitter"
 import { inject, injectable } from "tsyringe";
 import { NginxConfigContext, NginxConfigDirective, NginxConfigModule, NginxConfigModuleError, NginxConfigContextEvents } from "./types";
+import { ServiceInfo } from "../../common/serviceInfo";
 
 export class NginxConfModuleContext extends (EventEmitter as new () => TypedEmitter<NginxConfigContextEvents>) implements NginxConfigContext {
     private _context: NginxConfItem;
@@ -16,6 +17,7 @@ export class NginxConfModuleContext extends (EventEmitter as new () => TypedEmit
         this.value = context._value;
         this._context = context;
     }
+    
 
     getContexts(name: string): NginxConfigContext[] {
         const foundContexts = this._context[name];
@@ -67,11 +69,24 @@ export class NginxConfModuleContext extends (EventEmitter as new () => TypedEmit
 
         return undefined;
     }
+
+    editDirective(directiveToEdit: NginxConfigDirective, changes: NginxConfigDirective): NginxConfigContext | undefined {
+        const directiveFoundIndex = this._context[directiveToEdit.name]
+                                   ?.findIndex(v => v._value === directiveToEdit.params.join(" "));
+        
+        if (directiveFoundIndex !== -1) {
+            const contexts = this._context[directiveToEdit.name] as NginxConfItem[];
+            contexts[(directiveFoundIndex as number)]._value = changes.params.join(" ");
+            return new NginxConfModuleContext(this._context);
+        }
+    }
 }
 
 @injectable()
 export class NginxConfModule implements NginxConfigModule {
     private _rootContext: NginxConfigContext | undefined;
+    private _serverContext: NginxConfigContext | undefined;
+    private conf: NginxConfFile | undefined;
 
     constructor(
         @inject("NginxConf") private nginxConf: typeof NginxConfFile,
@@ -82,6 +97,7 @@ export class NginxConfModule implements NginxConfigModule {
          */
         this.getRootContext();
     }
+    
 
     getRootContext(): Promise<NginxConfigContext> {
         return new Promise((resolve, reject) => {
@@ -89,16 +105,14 @@ export class NginxConfModule implements NginxConfigModule {
                 if (err || !conf) {
                     throw (err || new NginxConfigModuleError(`Could not set up NgixConf at file path '${this.nginxConfigFilePath}'`));
                 }
+
+                if (this._rootContext != null) {
+                    return resolve(this._rootContext);
+                }
     
                 this._rootContext = new NginxConfModuleContext(conf.nginx);
-                
-                const flushConf = async () => await this.flush(conf);
 
-                this._rootContext.on('update', async (updateContext: NginxConfigContext) => {
-                    // Listen to updated context's update to apply their updates
-                    updateContext.on('update', flushConf);
-                    await flushConf();
-                }); 
+                this.conf = conf;
 
                 return resolve(this._rootContext);
             });
@@ -127,9 +141,96 @@ export class NginxConfModule implements NginxConfigModule {
         throw new NginxConfigModuleError(`Could not add context '${name}'`);
     }
 
-    private flush(conf: NginxConfFile): Promise<void> {
+
+    async getServerContext(): Promise<NginxConfigContext | undefined> {
+        if (await this.getRootContext() == null) {
+            throw new NginxConfigModuleError("Root context could not be found in the nginx config path.");
+        }
+
+        let serverContext;
+
+        const rootServers = this.getContexts('server');
+        
+        if (rootServers && rootServers.length > 0) {
+
+            serverContext = rootServers[0]
+        } else {
+            const httpContext = this.getContexts('http');
+            serverContext = httpContext && 
+                   httpContext.find(context => context.getContexts('server').length > 0)
+                   ?.getContexts('server')[0];
+        }
+
+        this._serverContext = serverContext;
+
+
+        return Promise.resolve(serverContext);
+    }
+
+    getServiceLocationContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined {
+        const serviceName = serviceInfo.raw().name;
+        const servicePath = '/api/' + serviceName;
+        let serviceLocationContext = this._serverContext?.getContexts('location')
+                                                         .find(context => context.value === servicePath);
+    
+        if (serviceLocationContext == null) {
+            serviceLocationContext = this._serverContext?.addContext('location', servicePath)
+                        .getContexts('location')
+                        .find(context => context.value === servicePath);
+        }
+
+        if (serviceLocationContext?.getComments().length as number < 1) {
+            serviceLocationContext?.addComment("Managed By Luna");
+        }
+
+        const serviceRewriteRuleDirectiveExists = serviceLocationContext?.getDirectives('rewrite')?.length as number > 0;
+
+        if (!serviceRewriteRuleDirectiveExists) {
+            serviceLocationContext?.addDirective({
+                name: "rewrite", 
+                params: [`/api/${serviceName}/(.*)`, "/$1", "break"]
+            });
+        }
+
+        const serviceLocationDirectiveExists = serviceLocationContext?.getDirectives('proxy_pass')
+                                                                      ?.some(directive => directive.params[0] === `http://${this.getServiceUpstreamKey(serviceInfo)}`)
+        if (!serviceLocationDirectiveExists) {
+            serviceLocationContext?.addDirective({
+                name: "proxy_pass", 
+                params: [`http://${this.getServiceUpstreamKey(serviceInfo)}`]
+            });
+        }
+
+
+        return serviceLocationContext;
+    }
+
+    getServiceUpstreamContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined {
+        let serviceUpstreamContext = this.getContexts('upstream')
+                                         ?.find(context => context.value === this.getServiceUpstreamKey(serviceInfo));
+        
+        if (serviceUpstreamContext == null) {
+            serviceUpstreamContext = this.addContext('upstream', this.getServiceUpstreamKey(serviceInfo))
+                                         .getContexts('upstream')
+                                         .find(context => context.value === this.getServiceUpstreamKey(serviceInfo));
+        }                                                   
+
+        if (serviceUpstreamContext?.getComments().length as number < 1) {
+            serviceUpstreamContext?.addComment("Managed By Luna");
+        }
+
+        serviceUpstreamContext?.on('update', this.flush);
+        return serviceUpstreamContext;
+    }
+
+    getServiceUpstreamKey(serviceInfo: ServiceInfo): string {
+        return `luna_service_${serviceInfo.raw().name}`;
+    }
+
+    private flush(): Promise<void> {
         return new Promise(async (resolve, reject) => {
-            conf.flush((err) => {
+            console.log("FLUSHED");
+            this.conf?.flush((err) => {
                 if (err) throw err;
 
                 return resolve();

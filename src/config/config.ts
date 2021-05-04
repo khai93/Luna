@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { LoadBalancerType } from '../modules/load-balancer';
+import { LoadBalancerType } from '../modules/load-balancer/types';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'development'}` });
 
