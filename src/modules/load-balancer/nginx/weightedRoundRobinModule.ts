@@ -1,7 +1,8 @@
 import { inject, injectable } from "tsyringe";
 import { ServiceInfo } from "../../../common/serviceInfo";
+import { Status } from "../../../common/status/status";
 import { LoggerModule } from "../../logger/types";
-import { NginxConfigContext, NginxConfigModule } from "../../nginx-config/types";
+import { NginxConfigContext, NginxConfigDirective, NginxConfigModule } from "../../nginx-config/types";
 import { ServiceModule } from "../../service/types";
 import { LoadBalancerModule, LoadBalancerModuleError } from "../types";
 
@@ -28,24 +29,21 @@ export class WeightedRoundRobinModule implements LoadBalancerModule {
         const instanceAlreadyAdded = serviceUpstreamContext?.getDirectives('server')
                                ?.some(directive => directive.params[0] === instance.value.url.host);
         
-        if (!instanceAlreadyAdded) {
-            serviceUpstreamContext?.addDirective({
-                name: 'server',
-                params: [instance.value.url.host, serviceWeight]
-            });
-        } else {
-            const directive = serviceUpstreamContext?.getDirectives('server')
-                              ?.find(directive => directive.params[0] === instance.value.url.host);
- 
-            if (directive && directive.params.length < 2) {
-                serviceUpstreamContext?.editDirective(directive, {
-                    name: directive.name,
+        const directives: NginxConfigDirective[] = [
+                {
+                    name: 'server',
                     params: [
-                        directive.params[0],
-                        serviceWeight
+                        instance.value.url.host, 
+                        serviceWeight, 
+                        instance.value.status.equals(new Status("DOWN")) ? 'down' : ''
                     ]
-                });
-            }
+                }
+        ];
+
+        if (!instanceAlreadyAdded) {
+            serviceUpstreamContext?.addDirective(directives[0]);
+        } else {
+            this.nginxConfigModule.editDirectivesIfNotSame(serviceUpstreamContext as NginxConfigContext, directives, 0);
         };
 
         const serviceLocationContext = this.nginxConfigModule.getServiceLocationContext(instance);
