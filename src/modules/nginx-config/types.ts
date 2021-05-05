@@ -31,6 +31,15 @@ export interface NginxConfigModule {
     getServiceUpstreamContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
     getServiceLocationContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
     getServiceUpstreamKey(serviceInfo: ServiceInfo): string;
+    editDirectivesIfNotSame(context: NginxConfigContext, directives: NginxConfigDirective[], uniqueParamIndex?: number): void;
+    
+    /**
+     * Checks if every directive in an array exists in context,
+     * if they don't, adds the directive to the context.
+     * @param context 
+     * @param directives list fo directives to check and add
+     */
+    addDirectivesIfNotExist(context: NginxConfigContext, directives: NginxConfigDirective[]): void;
 }
 
 export interface NginxConfigContextEvents {

@@ -1,15 +1,12 @@
 import { inject, injectable } from "tsyringe";
 import { IExecuteable } from "../../common/interfaces/IExecuteable";
 import { LoggerModule } from "../logger/types";
-import { NginxConfFile } from 'nginx-conf';
 import { ServiceModule } from "../service/types";
 import shellJS from 'shelljs';
 import { ServiceInfo } from "../../common/serviceInfo";
 import InstanceId from "../../common/instanceId";
 import { Configuration } from "../../config/config";
-import fsPromise from 'fs/promises';
 import { Name } from "../../common/name";
-import { NginxConfigContext, NginxConfigModule } from "../nginx-config/types";
 import { LoadBalancerModule } from "../load-balancer/types";
 export type NginxInstanceData = {
     serviceName: Name,
@@ -29,7 +26,7 @@ export class NginxModule implements IExecuteable {
         @inject("ServiceModule") private serviceModule: ServiceModule,
         @inject("ShellJs") private shell: typeof shellJS,
         @inject("ApiGatewayConfig") private apiGatewayConfig: Configuration,
-        @inject("LoadBalancerModule") private loadBalancerModule: LoadBalancerModule
+        @inject("LoadBalancerModule") private loadBalancerModule: LoadBalancerModule,
     ) {
         this.logger.log("Nginx Gateway Selected as Gateway.");
     }
@@ -59,6 +56,8 @@ export class NginxModule implements IExecuteable {
     private setUpListeners() {
         this.serviceModule.on('update', (updatedServiceInfo: ServiceInfo) => {
             this.logger.log(`Service [${updatedServiceInfo.value.name.value}] updated.`);
+            this.loadBalancerModule.balanceService(updatedServiceInfo);
+            this.requestNginxReload();
         });
 
         this.serviceModule.on('remove', (removedInstanceId: InstanceId) => {
@@ -80,14 +79,10 @@ export class NginxModule implements IExecuteable {
             setTimeout(() => {
                 if (this.shell.exec('sudo nginx -t', { silent: true }).code != 0) {
                     this.logger.error(new NginxModuleError("Nginx Config File Test: Failure"));
-                } else {
-                    this.logger.info("Nginx Config File Test: Success");
                 }
 
                 if (this.shell.exec('sudo service nginx reload', { silent: true }).code != 0) {
                     this.logger.error(new NginxModuleError("Nginx Service Reload: Failure"));
-                } else {
-                    this.logger.info("Nginx Service Reload: Success");
                 }
 
                 this._reloading = false;

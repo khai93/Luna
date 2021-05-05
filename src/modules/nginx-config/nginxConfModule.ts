@@ -183,24 +183,18 @@ export class NginxConfModule implements NginxConfigModule {
             serviceLocationContext?.addComment("Managed By Luna");
         }
 
-        const serviceRewriteRuleDirectiveExists = serviceLocationContext?.getDirectives('rewrite')?.length as number > 0;
-
-        if (!serviceRewriteRuleDirectiveExists) {
-            serviceLocationContext?.addDirective({
-                name: "rewrite", 
+        const serviceLocationDirectives: NginxConfigDirective[] = [
+            {
+                name: 'rewrite',
                 params: [`/api/${serviceName}/(.*)`, "/$1", "break"]
-            });
-        }
-
-        const serviceLocationDirectiveExists = serviceLocationContext?.getDirectives('proxy_pass')
-                                                                      ?.some(directive => directive.params[0] === `http://${this.getServiceUpstreamKey(serviceInfo)}`)
-        if (!serviceLocationDirectiveExists) {
-            serviceLocationContext?.addDirective({
+            },
+            {
                 name: "proxy_pass", 
                 params: [`http://${this.getServiceUpstreamKey(serviceInfo)}`]
-            });
-        }
+            }
+        ]
 
+        this.addDirectivesIfNotExist(serviceLocationContext as NginxConfigContext, serviceLocationDirectives);
 
         return serviceLocationContext;
     }
@@ -225,6 +219,48 @@ export class NginxConfModule implements NginxConfigModule {
 
     getServiceUpstreamKey(serviceInfo: ServiceInfo): string {
         return `luna_service_${serviceInfo.raw().name}`;
+    }
+
+   addDirectivesIfNotExist(context: NginxConfigContext, directives: NginxConfigDirective[]) {
+        for (const directive of directives) {
+            const exists = context.getDirectives(directive.name)
+                                  ?.some((dir) => this.compareDirectiveParams(directive, dir));
+            
+            if (!exists) {
+                context.addDirective(directive);
+            }
+        }
+    }
+
+    editDirectivesIfNotSame(context: NginxConfigContext, directives: NginxConfigDirective[], uniqueParamIndex?: number) {
+        for (const directive of directives) {
+            const filteredDirectives = context.getDirectives(directive.name)
+                                   ?.filter((dir: NginxConfigDirective) => uniqueParamIndex != null ? dir.params[uniqueParamIndex] === directive.params[uniqueParamIndex] : true)
+            
+            const isEqual = (filteredDirectives as NginxConfigDirective[]).every(dir => this.compareDirectiveParams(dir, directive));
+
+            if (!isEqual) {
+                filteredDirectives?.map(dir => context.editDirective(dir, directive));
+            }
+        }
+    }
+
+    /**
+     * Compares two directives to see if they have the same param.
+     * if only param in the directive is a empty string, then it is a directive without params.
+     * @param baseDir dir1
+     * @param comparedDir dir2
+     * @returns boolean
+     */
+    private compareDirectiveParams = (baseDir: NginxConfigDirective, comparedDir: NginxConfigDirective): boolean => {
+        if (comparedDir.params.length > 0) {
+            return comparedDir.params.every((param, i) => baseDir.params[i] === param);
+        }
+
+        /**
+         * Both directives have no params
+         */
+        return baseDir.params.length === 1 && baseDir.params[0] == '0';
     }
 
     private flush(): Promise<void> {

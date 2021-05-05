@@ -97,6 +97,7 @@ function startHeartbeat(instanceNum: number) {
 
         if (instanceNum = 2) {
             downData = data2;
+            downData.status = "DOWN";
         }
 
         registryInstance.put(instanceNum == 2 ? servicesApiURL2.toString() : servicesApiURL.toString(), downData)
@@ -105,7 +106,7 @@ function startHeartbeat(instanceNum: number) {
             startHeartbeat(instanceNum);
         })
         .catch(e => { throw e });
-    }, 30000)
+    }, 30000);
 }
 
 
