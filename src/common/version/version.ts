@@ -2,7 +2,7 @@ import { IEquatable } from "../interfaces/IEquatable";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 
-class VersionNotValid extends Error {
+export class VersionNotValidError extends Error {
     constructor(message : string) {
         super(message);
 
@@ -17,8 +17,8 @@ export class Version implements IValidatable, IValueObject<number>, IEquatable<V
     constructor(version: number) {
         this._value = version;
 
-        if (!this.isValid) {
-            throw new VersionNotValid("Version number provided is not a postive integer.");
+        if (!this.isValid()) {
+            throw new VersionNotValidError("Version number provided is not a postive integer.");
         }
     }
  

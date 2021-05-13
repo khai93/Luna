@@ -1,6 +1,4 @@
 import { inject, injectable } from "tsyringe";
-import { apiGatewayConfig, Configuration } from "../../config/config";
-import { LoadBalancerType } from "../../modules/load-balancer";
 import { IValidatable } from "../interfaces/IValidatable";
 import { IValueObject } from "../interfaces/IValueObject";
 
@@ -20,14 +18,13 @@ export class BalancerOptions implements IValidatable, IValueObject<BalancerOptio
         this.value = opts;
 
         if (!this.isValid()) {
-            throw new BalancerOptionsNotValidError(this._errorMessage);
+            throw new BalancerOptionsNotValidError("Balanced Options passed in are null");
         }
 
     }
 
     isValid(): boolean {
-        if (this.value == null || this.value.weight == null && apiGatewayConfig.balancer === LoadBalancerType.WeightedRoundRobin) {
-            this._errorMessage = "'weight' is required in balancerOptions when using Weighted Round Robin balancer.";
+        if (this.value == null || this.value.weight == null) {
             return false;
         }
 
