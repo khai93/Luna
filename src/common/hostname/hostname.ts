@@ -27,7 +27,8 @@ export class Hostname implements IValidatable, IValueObject<string>, IEquatable<
         } else {
             return this.value === object.value;
         }
-    }    
+    }
+    
 }
 
 
