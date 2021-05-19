@@ -1,9 +1,9 @@
 import InstanceId from "src/common/instanceId";
 import { ServiceInfo } from "src/common/serviceInfo";
 
-const fakeServiceInfo = new ServiceInfo({
+export const fakeServiceInfo = new ServiceInfo({
     instanceId: InstanceId.fromString('mock:0.0.0.0:80').raw,
-    name: 'mockName',
+    name: 'mock',
     description: 'mockDesc',
     version: '1',
     status: 'OK',
@@ -14,9 +14,9 @@ const fakeServiceInfo = new ServiceInfo({
     last_heartbeat: 0,
 });
 
-const fakeServiceInfo2 = new ServiceInfo({
+export const fakeServiceInfo2 = new ServiceInfo({
     instanceId: InstanceId.fromString('mock2:0.0.0.0:80').raw,
-    name: 'mockName',
+    name: 'mock2',
     description: 'mockDesc',
     version: '1',
     status: 'OK',
@@ -27,9 +27,9 @@ const fakeServiceInfo2 = new ServiceInfo({
     last_heartbeat: 0,
 });
 
-const fakeServiceInfo3 = new ServiceInfo({
+export const fakeServiceInfo3 = new ServiceInfo({
     instanceId: InstanceId.fromString('mock3:0.0.0.0:80').raw,
-    name: 'mockName',
+    name: 'mock3',
     description: 'mockDesc',
     version: '1',
     status: 'OK',
@@ -40,11 +40,27 @@ const fakeServiceInfo3 = new ServiceInfo({
     last_heartbeat: 0,
 });
 
-export const fakeServices = [
+export let fakeServices = [
     fakeServiceInfo,
     fakeServiceInfo2,
     fakeServiceInfo3
 ];
+
+export const resetServiceModuleMocks = () => {
+    fakeServices = [
+        fakeServiceInfo,
+        fakeServiceInfo2,
+        fakeServiceInfo3
+    ];
+
+    mockAdd.mockClear();
+    mockUpdate.mockClear();
+    mockRemove.mockClear();
+    mockFindByInstanceId.mockClear();
+    mockFindAllByName.mockClear();
+    mockGetAll.mockClear();
+    mockServiceModule.mockClear();
+}
 
 
 export const mockAdd = jest.fn();
