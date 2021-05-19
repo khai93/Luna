@@ -1,3 +1,9 @@
+/**
+ * Tests MemoryServiceModule class
+ * 
+ * @group unit/modules/service
+ */
+
 import InstanceId from '../../common/instanceId'
 import { Name } from '../../common/name'
 import { ServiceInfo } from '../../common/serviceInfo'
