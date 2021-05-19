@@ -4,11 +4,23 @@ import { Name } from "../../common/name";
 import { ServiceInfo } from "../../common/serviceInfo";
 
 export interface ServiceModule extends EventEmitter {
+    /**
+     * Add a service to the database
+     * @param serviceInfo Service to be added
+     * @returns {Promise<ServiceInfo | null>} added service info or null if it couldn't add the service
+     */
     add(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
+
+    /**
+     * Updates a service based on its instanceId in the object.
+     * InstanceId's cannot change between services.
+     * @param serviceInfo Service to update
+     * @returns updated serviceInfo
+     */
     update(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
     remove(instanceId: InstanceId): Promise<void>;
-    findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | null>;
-    findAllByName(serviceName: Name): Promise<ServiceInfo[] | null>;
+    findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | undefined>;
+    findAllByName(serviceName: Name): Promise<ServiceInfo[]>;
     getAll(): Promise<ServiceInfo[]>;
 }
 

@@ -5,30 +5,28 @@ describe('Version Value Object', () => {
     describe('#isValid', () => {
         it.each([
             [undefined],
-            [-5],
-            [""],
-            [false],
-            [.0393]
+            [[-5]],
+            [[""]],
+            [[false]],
+            [[.0393]]
         ])(
-            'should throw VersionNotValidError if value is %i',
+            'should throw Error if value is %i',
             (a) => {
                 expect(
-                    () => new Version(a as unknown as number),
-                ).toThrowErrorMatchingInlineSnapshot(
-                    `"Version number provided is not a postive integer."`,
-                )
+                    () => new Version(a as unknown as string),
+                ).toThrow();
             },
         )
     });
 
     describe('#equals', () => {
         it.each([
-            [1, 2, false],
-            [500, 5, false],
-            [20, 58287, false],
-            [2, 2, true],
-            [58378, 58378, true]
-        ])('.equals(%i, %i): %s ', (a, b, expected) => {
+            ["1", "2", false],
+            ["500.2", "5", false],
+            ["20.5.1", "58287", false],
+            ["1.2", "1.2", true],
+            ["0.0.1", "0.0.1", true]
+        ])('.equals(%s, %s): %s ', (a, b, expected) => {
             const aVersion = new Version(a);
             const bVersion = new Version(b);
 

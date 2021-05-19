@@ -25,7 +25,7 @@ export type ServiceInfoRaw = {
     instanceId: InstanceIdRaw,
     name: string,
     description: string,
-    version: number,
+    version: string,
     status: string,
     balancerOptions: BalancerOptionsValue,
     url: string,
@@ -45,7 +45,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
         }
 
         if (typeof(obj.instanceId) === 'string') {
-            obj.instanceId = InstanceId.fromString(obj.instanceId).raw();
+            obj.instanceId = InstanceId.fromString(obj.instanceId).raw;
         }
 
         this._value = {
@@ -74,9 +74,9 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
     /**
      * @returns An object that is type ServiceInfoValue with its values all being primitive types
      */
-    raw() {
+    get raw(): ServiceInfoRaw {
         return {
-            instanceId: this._value.instanceId.raw(),
+            instanceId: this._value.instanceId.raw,
             name: this._value.name.value,
             description: this._value.description,
             version: this._value.version.value,

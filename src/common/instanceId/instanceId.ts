@@ -43,7 +43,7 @@ export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, 
                object.value.port.equals(this.value.port);
     }
 
-    raw(): InstanceIdRaw {
+    get raw(): InstanceIdRaw {
         return {
             serviceName: this.value.serviceName.value,
             hostname: this.value.hostname.value,
