@@ -1,3 +1,9 @@
+/**
+ * Tests Version Value Object
+ * 
+ * @group unit/common
+ */
+
 import Version from '.'
 import { VersionNotValidError } from './version'
 

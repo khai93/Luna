@@ -1,3 +1,10 @@
+/**
+ * Tests Status Value Object
+ * 
+ * @group unit/common
+ */
+
+
 import Status from '.'
 
 describe('Status Value Object', () => {

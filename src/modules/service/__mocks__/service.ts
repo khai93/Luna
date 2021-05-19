@@ -63,12 +63,23 @@ export const resetServiceModuleMocks = () => {
 }
 
 
-export const mockAdd = jest.fn();
-export const mockUpdate = jest.fn();
-export const mockRemove = jest.fn();
-export const mockFindByInstanceId = jest.fn();
+export const mockAdd = jest.fn((s) => Promise.resolve(s));
+export const mockUpdate = jest.fn((s) => Promise.resolve(s));
+export const mockRemove = jest.fn((instanceId) => {
+    const foundService = fakeServices.findIndex(service => service.value.instanceId.equals(instanceId));
+                
+    if (foundService == -1) {
+        fail(new Error("Called delete with service info that is not in the database."));
+    }
+
+    delete fakeServices[foundService];
+    return Promise.resolve();
+});
+export const mockFindByInstanceId = jest.fn((instanceId) => {
+    return fakeServices.find(service => service.value.instanceId.equals(instanceId))
+});
 export const mockFindAllByName = jest.fn();
-export const mockGetAll = jest.fn();
+export const mockGetAll = jest.fn(() => fakeServices);
 
 const mockServiceModule = jest.fn().mockImplementation(() => {
     return {
