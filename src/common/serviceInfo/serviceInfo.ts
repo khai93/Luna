@@ -22,7 +22,7 @@ export type ServiceInfoValue = {
 }
 
 export type ServiceInfoRaw = {
-    instanceId: InstanceIdRaw,
+    instanceId: string,
     name: string,
     description: string,
     version: string,
@@ -44,12 +44,8 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
             obj = info;
         }
 
-        if (typeof(obj.instanceId) === 'string') {
-            obj.instanceId = InstanceId.fromString(obj.instanceId).raw;
-        }
-
         this._value = {
-            instanceId: new InstanceId(obj.instanceId),
+            instanceId: InstanceId.fromString(obj.instanceId),
             name: new Name(obj.name),
             description: obj.description,
             version: new Version(obj.version),
@@ -76,7 +72,7 @@ export class ServiceInfo implements IValidatable, IValueObject<ServiceInfoValue>
      */
     get raw(): ServiceInfoRaw {
         return {
-            instanceId: this._value.instanceId.raw,
+            instanceId: this._value.instanceId.toString(),
             name: this._value.name.value,
             description: this._value.description,
             version: this._value.version.value,

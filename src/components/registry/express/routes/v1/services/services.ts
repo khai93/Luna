@@ -57,7 +57,7 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
                 return res.sendStatus(500);
             }
 
-            return res.status(201).send(addedInstance);
+            return res.status(201).send(addedInstance.raw);
         }));
 
         router.put("/services/:instanceId", catchErrorAsync(async (req, res) => {
@@ -79,7 +79,7 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
                 return res.sendStatus(500);
             }
 
-            return res.status(200).send(updatedInstance);
+            return res.status(200).send(updatedInstance.raw);
         }));
 
         router.delete("/services/:instanceId", catchErrorAsync(async (req, res) => {
@@ -107,6 +107,10 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
                 let bodyServiceInfo;
 
                 if (parseBody) {
+                    if (req.body == null || Object.keys(req.body).length === 0) {
+                        throw new Error("Instance info required in request body.");
+                    }
+
                     bodyServiceInfo = new ServiceInfo(req.body);
                 }
                 
