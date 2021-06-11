@@ -1,6 +1,7 @@
 import { Request, Router } from "express";
 import InstanceId from "src/common/instanceId";
 import { IExpressRoute } from "src/common/interfaces/IExpressRoute";
+import catchErrorAsync from "src/common/middlewares/catchErrorAsync";
 import { ServiceInfo } from "src/common/serviceInfo";
 import { TOKENS } from "src/di";
 import { ServiceModule } from "src/modules/service/types";
@@ -18,29 +19,27 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
     ){}
 
     execute(router: Router) {
-        router.get("/services", async (req, res, next) => {
-            const servicesData = await this.serviceModule!.getAll().catch(next) as ServiceInfo[];
+        router.get("/services", catchErrorAsync(async (req, res) => {
+            const servicesData = await this.serviceModule!.getAll();
             const rawData = servicesData.map(service => service.raw);
 
             res.send(rawData);
-        });
+        }));
 
-        router.get("/services/:instanceId", async (req, res, next) => {
-            const parsedRequest = await this.parseServiceRequest(req, false).catch(next) as ParsedServiceRequest;
-            const { instanceIdObject } = parsedRequest;
-
-            const instanceData = await this.serviceModule!.findByInstanceId(instanceIdObject).catch(next);
+        router.get("/services/:instanceId", catchErrorAsync(async (req, res) => {
+            const { instanceIdObject } = await this.parseServiceRequest(req, false);
+ 
+            const instanceData = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (instanceData == null) {
                 return res.sendStatus(404);
             }
 
             res.send(instanceData.raw);
-        });
+        }));
 
-        router.post("/services/:instanceId", async (req, res, next) => {
-            const parsedRequest = await this.parseServiceRequest(req, true).catch(next) as ParsedServiceRequest;
-            const { instanceIdObject, bodyServiceInfo } = parsedRequest;
+        router.post("/services/:instanceId", catchErrorAsync(async (req, res) => {
+            const { instanceIdObject, bodyServiceInfo } = await this.parseServiceRequest(req, true);
 
             if (!instanceIdObject.equals(bodyServiceInfo!.value.instanceId)) {
                 return res.sendStatus(400);
@@ -59,11 +58,10 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
             }
 
             return res.status(201).send(addedInstance);
-        });
+        }));
 
-        router.put("/services/:instanceId", async (req, res, next) => {
-            const parsedRequest  = await this.parseServiceRequest(req, true).catch(next) as ParsedServiceRequest;
-            const { instanceIdObject, bodyServiceInfo } = parsedRequest;
+        router.put("/services/:instanceId", catchErrorAsync(async (req, res) => {
+            const { instanceIdObject, bodyServiceInfo } = await this.parseServiceRequest(req, true);
 
             if (!instanceIdObject.equals(bodyServiceInfo!.value.instanceId)) {
                 return res.sendStatus(400);
@@ -82,12 +80,11 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
             }
 
             return res.status(200).send(updatedInstance);
-        });
+        }));
 
-        router.delete("/services/:instanceId", async (req, res, next) => {
-            const parsedRequest = await this.parseServiceRequest(req, false).catch(next) as ParsedServiceRequest;
-            const { instanceIdObject } = parsedRequest;
-
+        router.delete("/services/:instanceId", catchErrorAsync(async (req, res) => {
+            const { instanceIdObject } = await this.parseServiceRequest(req, false);
+ 
             const foundInstance = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (foundInstance == null) {
@@ -97,7 +94,7 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
             await this.serviceModule!.remove(instanceIdObject);
 
             return res.sendStatus(200);
-        });
+        }));
     }
 
     private parseServiceRequest(req: Request, parseBody: boolean): Promise<ParsedServiceRequest> {
