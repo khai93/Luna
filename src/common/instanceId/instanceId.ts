@@ -51,6 +51,10 @@ export class InstanceId implements IValidatable, IValueObject<InstanceIdValue>, 
         };
     }
 
+    toString(): string {
+        return `${this.value.serviceName.value}:${this.value.hostname.value}:${this.value.port.value}`;
+    }
+
     static fromString(instanceIdString: string): InstanceId {
         const instanceIdRegex = /(\w+):(.*):(\d+)/g;
 

@@ -18,13 +18,13 @@ export class BalancerOptions implements IValidatable, IValueObject<BalancerOptio
         this.value = opts;
 
         if (!this.isValid()) {
-            throw new BalancerOptionsNotValidError("Balanced Options passed in are null");
+            throw new BalancerOptionsNotValidError("Balanced Options passed in are invalid");
         }
 
     }
 
     isValid(): boolean {
-        if (this.value == null || this.value.weight == null) {
+        if (this.value.weight && this.value.weight > 0) {
             return false;
         }
 
