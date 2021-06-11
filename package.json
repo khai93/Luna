@@ -7,7 +7,7 @@
   "author": "khai93 <33293519+khai93@users.noreply.github.com>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node ./src/index.ts",
+    "start": "ts-node --compiler ttypescript ./src/app.ts",
     "test": "jest",
     "test:unit": "jest --group=unit",
     "test:integration": "jest --group=integration"
@@ -43,6 +43,7 @@
     "typescript": "^4.2.4"
   },
   "devDependencies": {
+    "@zerollup/ts-transform-paths": "^1.7.18",
     "jest": "^26.6.3",
     "jest-runner-groups": "^2.0.1",
     "ts-node": "^9.1.1",

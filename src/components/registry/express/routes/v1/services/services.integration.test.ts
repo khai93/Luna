@@ -6,7 +6,7 @@
 
 import express from 'express';
 import request from 'supertest';
-import { container } from 'src/di';
+import { container, TOKENS } from 'src/di';
 import { ExpressRegistryServicesRoute } from './services';
 import mockServiceModule, { fakeServices, mockAdd, mockUpdate, mockFindByInstanceId, mockGetAll, mockRemove, resetServiceModuleMocks } from 'src/modules/service/__mocks__/service';
 import InstanceId from 'src/common/instanceId';
@@ -16,7 +16,7 @@ describe("Express Registry Component: Services Route", () => {
 
     app.use(express.json());
 
-    container.register("ServiceModule", { useClass: mockServiceModule });
+    container.register(TOKENS.modules.service, { useClass: mockServiceModule });
         
     const serviceRoute = container.resolve(ExpressRegistryServicesRoute);
     serviceRoute.execute(app);

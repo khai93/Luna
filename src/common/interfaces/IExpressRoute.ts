@@ -1,7 +1,7 @@
 import { Router } from "express";
-import Version from "../../../common/version";
+import Version from "../version";
 
-export interface ExpressRegistryRoute {
+export interface IExpressRoute {
     version: Version;
     execute(router: Router): void;
 }
