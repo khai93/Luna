@@ -7,7 +7,8 @@ export const TOKENS = {
     },
     modules: {
         service: Symbol(),
-        logger: Symbol()
+        logger: Symbol(),
+        nginxConfig: Symbol()
     },
     components: {
         registry: {
@@ -27,6 +28,7 @@ import serviceModule from './modules/service';
 import { ServiceModule } from './modules/service/types';
 import config from './config';
 import { ExpressRegistryComponent } from './components/registry/express/express';
+import { NginxConfigModule } from "./modules/nginxConfig/types";
 
 // Modules
 
@@ -38,6 +40,9 @@ container.register<LoggerModule>(TOKENS.modules.logger, {
     useClass: TSLoggerModule
 }, { lifecycle: Lifecycle.ContainerScoped });
 
+container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
+    useClass: NginxConfModule
+});
 
 // Values
 
@@ -68,9 +73,10 @@ container.register(TOKENS.components.registry.component, {
 });
 
 import expressRegistryComponentRoutes from './components/registry/express/routes';
+import { NginxConfModule } from "./modules/nginxConfig/nginxConfModule";
 container.register(TOKENS.components.registry.routes, {
     useValue: expressRegistryComponentRoutes
-})
+});
 
 
 

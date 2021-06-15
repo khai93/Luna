@@ -2,7 +2,7 @@ import InstanceId from "src/common/instanceId";
 import { ServiceInfo } from "src/common/serviceInfo";
 
 export const fakeServiceInfo = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock:0.0.0.0:80').raw,
+    instanceId: 'mock:0.0.0.0:80',
     name: 'mock',
     description: 'mockDesc',
     version: '1',
@@ -15,7 +15,7 @@ export const fakeServiceInfo = new ServiceInfo({
 });
 
 export const fakeServiceInfo2 = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock2:0.0.0.0:80').raw,
+    instanceId: 'mock2:0.0.0.0:80',
     name: 'mock2',
     description: 'mockDesc',
     version: '1',
@@ -28,7 +28,7 @@ export const fakeServiceInfo2 = new ServiceInfo({
 });
 
 export const fakeServiceInfo3 = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock3:0.0.0.0:80').raw,
+    instanceId: 'mock3:0.0.0.0:80',
     name: 'mock3',
     description: 'mockDesc',
     version: '1',
