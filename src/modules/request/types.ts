@@ -11,6 +11,7 @@ export type RequestOptions = {
     maxRedirects?: number,
     httpAgent?: Agent,
     httpsAgent?: Agent,
+    responseType?: string,
     proxy?: { host: string, port: number, auth: object}
 }
 

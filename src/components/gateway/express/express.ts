@@ -12,13 +12,13 @@ export class ExpressGatewayComponent implements IExecutable {
     constructor(
         @inject(TOKENS.values.expressApp) private app: typeof application,
         @inject(TOKENS.values.expressRouter) private router: typeof express.Router,
-        @inject(TOKENS.components.registry.routes) private registryRoutes: IExpressRoute[]
+        @inject(TOKENS.components.gateway.routes) private gatewayRoutes: IExpressRoute[]
     ) { 
         this.gatewayRouterV1 = this.router();
     }
 
     execute(): void {
-        for (const route of this.registryRoutes) {
+        for (const route of this.gatewayRoutes) {
             if (route.version.equals(new Version("1"))) {
                 route.execute(this.gatewayRouterV1);
             }

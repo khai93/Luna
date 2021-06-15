@@ -57,8 +57,9 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
     }
     
     findAllByName(serviceName: Name): Promise<ServiceInfo[]> {
+        
         const found = this._services.filter(service => service.value.name.equals(serviceName));
-
+        
         return Promise.resolve(found);
     }
 

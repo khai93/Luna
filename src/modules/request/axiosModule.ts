@@ -1,4 +1,4 @@
-import { AxiosRequestConfig, Method, AxiosInstance, AxiosProxyConfig } from 'axios';
+import { AxiosRequestConfig, ResponseType, Method, AxiosInstance, AxiosProxyConfig, AxiosResponse } from 'axios';
 import { TOKENS } from 'src/di';
 import { inject, injectable } from 'tsyringe';
 import { RequestModule, RequestOptions } from './types';
@@ -10,9 +10,7 @@ export class AxiosRequestModule implements RequestModule {
     ){ }
 
     public async request<R>(options: RequestOptions): Promise<R> {
-        const requested = await this._client.request(this.convertToAxiosOpts(options));
-  
-        return requested.data;
+        return await this._client.request(this.convertToAxiosOpts(options));;
     }
 
     private convertToAxiosOpts(options: RequestOptions): AxiosRequestConfig {
@@ -27,6 +25,7 @@ export class AxiosRequestModule implements RequestModule {
             maxRedirects: options.maxRedirects,
             httpAgent: options.httpAgent,
             httpsAgent: options.httpsAgent,
+            responseType: options.responseType && options.responseType as ResponseType || undefined,
             proxy: options.proxy as unknown as AxiosProxyConfig
         }
 

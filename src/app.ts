@@ -13,6 +13,9 @@ expressApp.use(express.urlencoded({ extended: true }));
 const registryComponent = container.resolve<IExecutable>(TOKENS.components.registry.component);
 registryComponent.execute();
 
+const gatewayComponent = container.resolve<IExecutable>(TOKENS.components.gateway.component);
+gatewayComponent.execute();
+
 const loggerModule = container.resolve<LoggerModule>(TOKENS.modules.logger);
 
 const expressErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
@@ -26,4 +29,4 @@ const expressErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
 expressApp.use(expressErrorHandler);
 
 
-expressApp.listen(config.registry.port, () => loggerModule.log("Luna registry server started at PORT " + config.registry.port));
+expressApp.listen(config.registry.port, () => loggerModule.log("Luna server started at PORT " + config.registry.port));
