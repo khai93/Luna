@@ -63,7 +63,7 @@ container.register(TOKENS.values.expressRouter, {
 const tsLogger = new Logger();
 
 function logToTransport (logObject: ILogObject) {
-    fs.appendFile("logs", JSON.stringify(logObject) + "/n");
+    fs.appendFile("logs", JSON.stringify(logObject) + "/r/n");
 }
 
 tsLogger.attachTransport(

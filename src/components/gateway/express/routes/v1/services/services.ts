@@ -30,9 +30,12 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
 
             // TODO: IMPLEMENT BALANCER HERE
             const instance = services[0];
-     
+            
+            const splitReqUrl = req.url.split("/services/" + instance.raw.name);
+            const instanceUrl = instance.value.url.toString() + (splitReqUrl[splitReqUrl.length - 1] == "/" ? "" : splitReqUrl[splitReqUrl.length - 1]);
+
             const proxyRequestOptions: RequestOptions = {
-                url: instance.value.url.toString() + req.url,
+                url: instanceUrl,
                 method: req.method,
                 responseType: 'stream',
                 body: req.body,

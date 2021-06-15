@@ -4,7 +4,7 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'developmen
 
 export const config = {
     registry: {
-        port: parseInt(getEnvironmentVariable("REGISTRY_PORT", false, "3000") as string)
+        port: parseInt(getEnvironmentVariable("REGISTRY_PORT", false, "80") as string)
     }
 }
 

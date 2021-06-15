@@ -7,23 +7,21 @@ import { IExpressRoute } from "../../../common/interfaces/IExpressRoute";
 
 @injectable()
 export class ExpressGatewayComponent implements IExecutable {
-    private gatewayRouterV1: Router;
+    private gatewayRouter: Router;
 
     constructor(
         @inject(TOKENS.values.expressApp) private app: typeof application,
         @inject(TOKENS.values.expressRouter) private router: typeof express.Router,
         @inject(TOKENS.components.gateway.routes) private gatewayRoutes: IExpressRoute[]
     ) { 
-        this.gatewayRouterV1 = this.router();
+        this.gatewayRouter = this.router();
     }
 
     execute(): void {
         for (const route of this.gatewayRoutes) {
-            if (route.version.equals(new Version("1"))) {
-                route.execute(this.gatewayRouterV1);
-            }
+            route.execute(this.gatewayRouter);
         }
 
-        this.app.use("/gateway/v1/", this.gatewayRouterV1);
+        this.app.use("/gateway/", this.gatewayRouter);
     }
 }
