@@ -3,12 +3,14 @@ export const TOKENS = {
         expressApp: Symbol(),
         expressRouter: Symbol(),
         tsLogger: Symbol(),
-        config: Symbol()
+        config: Symbol(),
+        axiosClient: Symbol()
     },
     modules: {
         service: Symbol(),
         logger: Symbol(),
-        nginxConfig: Symbol()
+        nginxConfig: Symbol(),
+        request: Symbol()
     },
     components: {
         registry: {
@@ -29,6 +31,14 @@ import { ServiceModule } from './modules/service/types';
 import config from './config';
 import { ExpressRegistryComponent } from './components/registry/express/express';
 import { NginxConfigModule } from "./modules/nginxConfig/types";
+import http from 'http';
+import https from 'https';
+import { NginxConfModule } from "./modules/nginxConfig/nginxConfModule";
+import axios from "axios";
+
+const httpAgent = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
+
 
 // Modules
 
@@ -38,10 +48,14 @@ container.register<ServiceModule>(TOKENS.modules.service, {
 
 container.register<LoggerModule>(TOKENS.modules.logger, {
     useClass: TSLoggerModule
-}, { lifecycle: Lifecycle.ContainerScoped });
+});
 
 container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
     useClass: NginxConfModule
+});
+
+container.register<RequestModule>(TOKENS.modules.request, {
+    useClass: AxiosRequestModule
 });
 
 // Values
@@ -62,6 +76,13 @@ container.register(TOKENS.values.config, {
     useValue: config
 });
 
+container.register(TOKENS.values.axiosClient, {
+    useValue: axios.create({
+        httpsAgent,
+        httpAgent
+    })
+});
+
 
 
 /** COMPONENTS */
@@ -73,7 +94,8 @@ container.register(TOKENS.components.registry.component, {
 });
 
 import expressRegistryComponentRoutes from './components/registry/express/routes';
-import { NginxConfModule } from "./modules/nginxConfig/nginxConfModule";
+import { RequestModule } from "./modules/request/types";
+import { AxiosRequestModule } from "./modules/request/axiosModule";
 container.register(TOKENS.components.registry.routes, {
     useValue: expressRegistryComponentRoutes
 });
