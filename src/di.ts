@@ -27,7 +27,7 @@ export const TOKENS = {
 
 import "reflect-metadata";
 import express from 'express';
-import { Logger } from 'tslog';
+import { ILogObject, Logger } from 'tslog';
 import { container, Lifecycle } from "tsyringe";
 import { TSLoggerModule } from './modules/logger/TSLoggerModule';
 import { LoggerModule } from './modules/logger/types';
@@ -49,6 +49,57 @@ const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
 
 
+// Values
+
+container.register(TOKENS.values.expressApp, {
+    useValue: express()
+});
+
+container.register(TOKENS.values.expressRouter, {
+    useValue: express.Router
+});
+
+
+const tsLogger = new Logger();
+
+function logToTransport (logObject: ILogObject) {
+    fs.appendFile("logs.txt", JSON.stringify(logObject) + "/n");
+}
+
+tsLogger.attachTransport(
+    {
+      silly: logToTransport,
+      debug: logToTransport,
+      trace: logToTransport,
+      info: logToTransport,
+      warn: logToTransport,
+      error: logToTransport,
+      fatal: logToTransport,
+    },
+    "debug"
+  );
+
+container.register(TOKENS.values.tsLogger, {
+    useValue: tsLogger
+});
+
+container.register(TOKENS.values.config, {
+    useValue: config
+});
+
+container.register(TOKENS.values.axiosClient, {
+    useValue: axios.create({
+        httpsAgent,
+        httpAgent
+    })
+});
+
+container.register(TOKENS.values.fsAsync, {
+    useValue: fs
+});
+
+
+
 // Modules
 
 container.register<ServiceModule>(TOKENS.modules.service, {
@@ -65,35 +116,6 @@ container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
 
 container.register<RequestModule>(TOKENS.modules.request, {
     useClass: AxiosRequestModule
-});
-
-// Values
-
-container.register(TOKENS.values.expressApp, {
-    useValue: express()
-});
-
-container.register(TOKENS.values.expressRouter, {
-    useValue: express.Router
-});
-
-container.register(TOKENS.values.tsLogger, {
-    useValue: new Logger({ type: "hidden" })
-});
-
-container.register(TOKENS.values.config, {
-    useValue: config
-});
-
-container.register(TOKENS.values.axiosClient, {
-    useValue: axios.create({
-        httpsAgent,
-        httpAgent
-    })
-});
-
-container.register(TOKENS.values.fsAsync, {
-    useValue: fs
 });
 
 

@@ -106,4 +106,6 @@ dist
 # Tsc build files
 build
 
+logs.txt
+
 *.generated.json
