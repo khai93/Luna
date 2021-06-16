@@ -1,11 +1,13 @@
 import dotenv from 'dotenv';
+import { LoadBalancerType } from 'src/components/balancer/types';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'development'}` });
 
 export const config = {
-    registry: {
-        port: parseInt(getEnvironmentVariable("REGISTRY_PORT", false, "80") as string)
-    }
+    server: {
+        port: parseInt(getEnvironmentVariable("LUNA_PORT", false, "80") as string)
+    },
+    balancer: LoadBalancerType[getEnvironmentVariable("LOAD_BALANCER_TYPE", false, "RoundRobin") as keyof typeof LoadBalancerType]
 }
 
 export function getEnvironmentVariable(varName: string, required?: boolean, defaultValue?: string)  {

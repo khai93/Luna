@@ -4,6 +4,7 @@ import { IExpressRoute } from "src/common/interfaces/IExpressRoute";
 import catchErrorAsync from "src/common/middlewares/catchErrorAsync";
 import { Name } from "src/common/name";
 import Version from "src/common/version";
+import { LunaBalancerComponent } from "src/components/balancer/luna/luna";
 import { TOKENS } from "src/di";
 import { RequestModule, RequestOptions } from "src/modules/request/types";
 import { ServiceModule } from "src/modules/service/types";
@@ -15,7 +16,8 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
 
     constructor(
         @inject(TOKENS.modules.service) private serviceModule?: ServiceModule,
-        @inject(TOKENS.modules.request) private requestModule?: RequestModule
+        @inject(TOKENS.modules.request) private requestModule?: RequestModule,
+        @inject(TOKENS.components.balancer.component) private balancerComponent?: LunaBalancerComponent
     ) {}
 
     execute(router: Router) {
@@ -29,8 +31,12 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
             }
 
             // TODO: IMPLEMENT BALANCER HERE
-            const instance = services[0];
+            const instance = await this.balancerComponent?.getNextInstance(new Name(serviceName));
             
+            if (instance == null) {
+                throw new Error("Balancer unexpectedly could not find an instance");
+            }
+
             const splitReqUrl = req.url.split("/services/" + instance.raw.name);
             const instanceUrl = instance.value.url.toString() + (splitReqUrl[splitReqUrl.length - 1] == "/" ? "" : splitReqUrl[splitReqUrl.length - 1]);
 
@@ -40,7 +46,7 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
                 responseType: 'stream',
                 body: req.body,
                 headers: req.headers,
-            }
+            };
 
             const response = await this.requestModule?.request<AxiosResponse>(proxyRequestOptions);
             

@@ -21,6 +21,9 @@ export const TOKENS = {
         gateway: {
             component: Symbol(),
             routes: Symbol()
+        },
+        balancer: {
+            component: Symbol()
         }
     }
 }
@@ -43,6 +46,7 @@ import { RequestModule } from "./modules/request/types";
 import { AxiosRequestModule } from "./modules/request/axiosModule";
 import { ExpressGatewayComponent } from "./components/gateway/express/express";
 import { MemoryServiceModule } from "./modules/service/memory";
+import { LunaBalancerComponent } from "./components/balancer/luna/luna";
 import fs from 'fs/promises';
 
 const httpAgent = new http.Agent({ keepAlive: true });
@@ -132,7 +136,11 @@ container.register(TOKENS.components.gateway.component, {
     useClass: ExpressGatewayComponent
 }, {
     lifecycle: Lifecycle.ContainerScoped
-})
+});
+
+container.register(TOKENS.components.balancer.component, {
+    useClass: LunaBalancerComponent
+});
 
 import expressRegistryComponentRoutes from './components/registry/express/routes';
 import expressGatewayComponentRoutes from './components/gateway/express/routes';

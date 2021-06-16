@@ -5,20 +5,23 @@ import serviceInfo from './service.json';
 
 const app = express();
 
+const port = parseInt(process.env.PORT as string) || 3023;
+const instanceId = serviceInfo.name + ":" + "localhost:" + port;
 app.get("/", (req, res) => {
+    console.log("Instance:" + port + " called");
     res.send("OK");
 });
 
-app.listen(3023, () => {
-    axios.post("http://localhost:80/registry/v1/services/" + serviceInfo.name + ":localhost:3023", {
+app.listen(port, () => {
+    axios.post("http://localhost:80/registry/v1/services/" + instanceId, {
         ...serviceInfo,
-        instanceId: serviceInfo.name + ":" + "localhost:3023",
-        url: "http://localhost:3023",
+        instanceId,
+        url: "http://localhost:" + port,
         status: "OK"
     }).then((response) => {
-        console.log(response);
+        console.log("REGISTERED INSTANCE:" + port);
     }).catch(err => console.error)
     
 
-    console.log("Status service started on port 3023");
+    console.log("Status service started on port " + port);
 });

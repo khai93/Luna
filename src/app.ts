@@ -29,4 +29,4 @@ const expressErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
 expressApp.use(expressErrorHandler);
 
 
-expressApp.listen(config.registry.port, () => loggerModule.log("Luna server started at PORT " + config.registry.port));
+expressApp.listen(config.server.port, () => loggerModule.log("Luna server started at PORT " + config.server.port));
