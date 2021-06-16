@@ -17,7 +17,10 @@ app.listen(port, () => {
         ...serviceInfo,
         instanceId,
         url: "http://localhost:" + port,
-        status: "OK"
+        status: "OK",
+        balancerOptions: {
+            weight: parseInt(process.env.WEIGHT as string) || 1
+        }
     }).then((response) => {
         console.log("REGISTERED INSTANCE:" + port);
     }).catch(err => console.error)
