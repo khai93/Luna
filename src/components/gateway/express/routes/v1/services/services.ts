@@ -30,7 +30,6 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
                 throw new Error("Service name provided has no instances registered.");
             }
 
-            // TODO: IMPLEMENT BALANCER HERE
             const instance = await this.balancerComponent?.getNextInstance(new Name(serviceName));
             
             if (instance == null) {
