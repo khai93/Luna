@@ -19,6 +19,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
                 return reject("Attempted to add service that already exists.");
 
             this._services.push(serviceInfo);
+            this.emit("add", serviceInfo);
 
             return resolve(serviceInfo);
         });
@@ -32,6 +33,7 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         }
 
         this._services[foundService] = serviceInfo;
+        this.emit("update", serviceInfo);
 
         return Promise.resolve(this._services[foundService]);
     }
@@ -44,8 +46,8 @@ export class MemoryServiceModule extends (EventEmitter as new () => TypedEmitter
         }
 
         delete this._services[foundService];
-
         this._services = this._services.filter(service => service != null);
+        this.emit("remove", instanceId)
 
         return Promise.resolve();
     }

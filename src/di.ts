@@ -5,7 +5,9 @@ export const TOKENS = {
         tsLogger: Symbol(),
         config: Symbol(),
         axiosClient: Symbol(),
-        fsAsync: Symbol()
+        fsAsync: Symbol(),
+        shell: Symbol(),
+        nginxConf: Symbol()
     },
     modules: {
         service: Symbol(),
@@ -23,7 +25,8 @@ export const TOKENS = {
             routes: Symbol()
         },
         balancer: {
-            component: Symbol()
+            nginx: Symbol(),
+            luna: Symbol()
         }
     }
 }
@@ -46,8 +49,14 @@ import { RequestModule } from "./modules/request/types";
 import { AxiosRequestModule } from "./modules/request/axiosModule";
 import { ExpressGatewayComponent } from "./components/gateway/express/express";
 import { MemoryServiceModule } from "./modules/service/memory";
+import { NginxBalancerComponent } from "./components/balancer/nginx/nginx";
 import { LunaBalancerComponent } from "./components/balancer/luna/luna";
 import fs from 'fs/promises';
+import shellJS from 'shelljs';
+import { NginxConfFile } from 'nginx-conf';
+import { NginxGatewayComponent } from "./components/gateway/nginx/nginx";
+import { ApiGatewayType } from "./components/gateway/types";
+
 
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
@@ -102,7 +111,13 @@ container.register(TOKENS.values.fsAsync, {
     useValue: fs
 });
 
+container.register(TOKENS.values.shell, {
+    useValue: shellJS
+});
 
+container.register(TOKENS.values.nginxConf, {
+    useValue: NginxConfFile
+});
 
 // Modules
 
@@ -114,15 +129,13 @@ container.register<LoggerModule>(TOKENS.modules.logger, {
     useClass: TSLoggerModule
 });
 
-container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
-    useClass: NginxConfModule
-});
-
 container.register<RequestModule>(TOKENS.modules.request, {
     useClass: AxiosRequestModule
 });
 
-
+container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
+    useClass: NginxConfModule
+})
 
 /** COMPONENTS */
 
@@ -132,13 +145,25 @@ container.register(TOKENS.components.registry.component, {
     lifecycle: Lifecycle.ContainerScoped
 });
 
-container.register(TOKENS.components.gateway.component, {
-    useClass: ExpressGatewayComponent
-}, {
-    lifecycle: Lifecycle.ContainerScoped
+if (config.gateway == ApiGatewayType.Luna) {
+    container.register(TOKENS.components.gateway.component, {
+        useClass: ExpressGatewayComponent
+    }, {
+        lifecycle: Lifecycle.ContainerScoped
+    });
+} else {
+    container.register(TOKENS.components.gateway.component, {
+        useClass: NginxGatewayComponent
+    }, {
+        lifecycle: Lifecycle.ContainerScoped
+    });
+}
+
+container.register(TOKENS.components.balancer.nginx, {
+    useClass: NginxBalancerComponent
 });
 
-container.register(TOKENS.components.balancer.component, {
+container.register(TOKENS.components.balancer.luna, {
     useClass: LunaBalancerComponent
 });
 

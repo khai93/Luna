@@ -5,6 +5,9 @@ import TypedEmitter from "typed-emitter"
 import { inject, injectable } from "tsyringe";
 import { NginxConfigContext, NginxConfigDirective, NginxConfigModule, NginxConfigModuleError, NginxConfigContextEvents } from "./types";
 import { ServiceInfo } from "../../common/serviceInfo";
+import { Name } from "src/common/name";
+import { TOKENS } from "src/di";
+import config from "src/config";
 
 export class NginxConfModuleContext extends (EventEmitter as new () => TypedEmitter<NginxConfigContextEvents>) implements NginxConfigContext {
     private _context: NginxConfItem;
@@ -87,11 +90,14 @@ export class NginxConfModule implements NginxConfigModule {
     private _rootContext: NginxConfigContext | undefined;
     private _serverContext: NginxConfigContext | undefined;
     private conf: NginxConfFile | undefined;
+    private nginxConfigFilePath: string;
 
     constructor(
-        @inject("NginxConf") private nginxConf: typeof NginxConfFile,
-        @inject("PathToNginxConfigFile") private nginxConfigFilePath: string
+        @inject(TOKENS.values.nginxConf) private nginxConf: typeof NginxConfFile,
+        @inject(TOKENS.values.config) private _config: typeof config
     ) {
+        this.nginxConfigFilePath = _config.nginx.confFilePath as string;
+
         /**
          * Sets root context
          */
@@ -167,9 +173,8 @@ export class NginxConfModule implements NginxConfigModule {
         return Promise.resolve(serverContext);
     }
 
-    getServiceLocationContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined {
-        const serviceName = serviceInfo.raw.name;
-        const servicePath = '/api/' + serviceName;
+    getServiceLocationContext(serviceName: Name): NginxConfigContext | undefined {
+        const servicePath = '/gateway/services/' + serviceName.value;
         let serviceLocationContext = this._serverContext?.getContexts('location')
                                                          .find(context => context.value === servicePath);
     
@@ -186,11 +191,11 @@ export class NginxConfModule implements NginxConfigModule {
         const serviceLocationDirectives: NginxConfigDirective[] = [
             {
                 name: 'rewrite',
-                params: [`/api/${serviceName}/(.*)`, "/$1", "break"]
+                params: [`/gateway/services/${serviceName.value}/(.*)`, "/$1", "break"]
             },
             {
                 name: "proxy_pass", 
-                params: [`http://${this.getServiceUpstreamKey(serviceInfo)}`]
+                params: [`http://${this.getServiceUpstreamKey(serviceName)}`]
             }
         ]
 
@@ -199,14 +204,14 @@ export class NginxConfModule implements NginxConfigModule {
         return serviceLocationContext;
     }
 
-    getServiceUpstreamContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined {
+    getServiceUpstreamContext(serviceName: Name): NginxConfigContext | undefined {
         let serviceUpstreamContext = this.getContexts('upstream')
-                                         ?.find(context => context.value === this.getServiceUpstreamKey(serviceInfo));
+                                         ?.find(context => context.value === this.getServiceUpstreamKey(serviceName));
         
         if (serviceUpstreamContext == null) {
-            serviceUpstreamContext = this.addContext('upstream', this.getServiceUpstreamKey(serviceInfo))
+            serviceUpstreamContext = this.addContext('upstream', this.getServiceUpstreamKey(serviceName))
                                          .getContexts('upstream')
-                                         .find(context => context.value === this.getServiceUpstreamKey(serviceInfo));
+                                         .find(context => context.value === this.getServiceUpstreamKey(serviceName));
         }                                                   
 
         if (serviceUpstreamContext?.getComments().length as number < 1) {
@@ -217,8 +222,8 @@ export class NginxConfModule implements NginxConfigModule {
         return serviceUpstreamContext;
     }
 
-    getServiceUpstreamKey(serviceInfo: ServiceInfo): string {
-        return `luna_service_${serviceInfo.raw.name}`;
+    getServiceUpstreamKey(serviceName: Name): string {
+        return `luna_service_${serviceName.value}`;
     }
 
    addDirectivesIfNotExist(context: NginxConfigContext, directives: NginxConfigDirective[]) {

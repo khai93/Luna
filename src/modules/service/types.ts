@@ -25,7 +25,6 @@ export interface ServiceModule extends EventEmitter {
 }
 
 export interface ServiceModuleEvents {
-    error: (error: Error) => void,
     update: (updatedServiceInfo: ServiceInfo) => void,
     remove: (removedServiceName: InstanceId) => void,
     add: (addedServiceInfo: ServiceInfo) => void

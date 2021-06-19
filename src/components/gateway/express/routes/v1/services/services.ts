@@ -17,7 +17,7 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
     constructor(
         @inject(TOKENS.modules.service) private serviceModule?: ServiceModule,
         @inject(TOKENS.modules.request) private requestModule?: RequestModule,
-        @inject(TOKENS.components.balancer.component) private balancerComponent?: LunaBalancerComponent
+        @inject(TOKENS.components.balancer.luna) private balancerComponent?: LunaBalancerComponent
     ) {}
 
     execute(router: Router) {

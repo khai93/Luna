@@ -1,4 +1,5 @@
 import EventEmitter from "node:events";
+import { Name } from "src/common/name";
 import { ServiceInfo } from "../../common/serviceInfo";
 
 export type NginxConfigDirective = {
@@ -28,9 +29,9 @@ export interface NginxConfigModule {
      * either inside/outside a http context
      */
     getServerContext(): Promise<NginxConfigContext | undefined>;
-    getServiceUpstreamContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
-    getServiceLocationContext(serviceInfo: ServiceInfo): NginxConfigContext | undefined;
-    getServiceUpstreamKey(serviceInfo: ServiceInfo): string;
+    getServiceUpstreamContext(serviceName: Name): NginxConfigContext | undefined;
+    getServiceLocationContext(serviceName: Name): NginxConfigContext | undefined;
+    getServiceUpstreamKey(serviceName: Name): string;
     editDirectivesIfNotSame(context: NginxConfigContext, directives: NginxConfigDirective[], uniqueParamIndex?: number): void;
     
     /**

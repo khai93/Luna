@@ -31,6 +31,10 @@ export class Name implements IValidatable, IValueObject<string>, IEquatable<Name
         return this._value;
     } 
 
+    get raw(): string {
+        return this._value;
+    }
+
     equals(object: string | Name): boolean {
         if (object instanceof Name) {
             return object.value === this._value

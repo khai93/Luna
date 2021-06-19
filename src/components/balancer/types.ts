@@ -8,7 +8,7 @@ export enum LoadBalancerType {
 }
 
 export interface LoadBalancer {
-    balanceService(serviceInfo: Name): Promise<ServiceInfo>;
+    balanceService(serviceName: Name, currentInstance?: ServiceInfo): Promise<ServiceInfo>;
 }
 
 export class LoadBalancerError extends Error {

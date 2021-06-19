@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-    axios.post("http://localhost:80/registry/v1/services/" + instanceId, {
+    axios.post("http://localhost:4000/registry/v1/services/" + instanceId, {
         ...serviceInfo,
         instanceId,
         url: "http://localhost:" + port,
