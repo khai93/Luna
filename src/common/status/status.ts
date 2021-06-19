@@ -19,7 +19,7 @@ export class Status implements IValueObject<StatusText>, IValidatable, IEquatabl
             this.value = status;
         }
 
-        if (!this.isValid) {
+        if (!this.isValid()) {
             throw new StatusNotValid("String provided is null");
         }
         

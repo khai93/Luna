@@ -1,158 +1,182 @@
-import { container, Lifecycle } from 'tsyringe';
-import serviceModule from './modules/service';
-import { ServiceModule } from './modules/service/types';
+export const TOKENS = {
+    values: {
+        expressApp: Symbol(),
+        expressRouter: Symbol(),
+        tsLogger: Symbol(),
+        config: Symbol(),
+        axiosClient: Symbol(),
+        fsAsync: Symbol(),
+        shell: Symbol(),
+        nginxConf: Symbol()
+    },
+    modules: {
+        service: Symbol(),
+        logger: Symbol(),
+        nginxConfig: Symbol(),
+        request: Symbol()
+    },
+    components: {
+        registry: {
+            component: Symbol(),
+            routes: Symbol()
+        },
+        gateway: {
+            component: Symbol(),
+            routes: Symbol()
+        },
+        balancer: {
+            nginx: Symbol(),
+            luna: Symbol()
+        }
+    }
+}
+
+import "reflect-metadata";
 import express from 'express';
-import { apiGatewayConfig, ApiGatewayType, Configuration, serviceRegistryConfig } from './config/config';
-import offlineMiddleware from './modules/api-gateway/luna/api-gateway/middlewares/offline';
-import Middleware from './common/middleware';
-import expressHttpProxy from 'express-http-proxy';
-import { ServiceRegistryRoute } from './service-registry/routes/ServiceRegistryRoute';
-import ServiceRegistryUpdateRoute from './service-registry/routes/v1/services';
-import cors from 'cors';
-import authMiddleware from './service-registry/middlewares/auth';
+import { ILogObject, Logger } from 'tslog';
+import { container, Lifecycle } from "tsyringe";
+import { TSLoggerModule } from './modules/logger/TSLoggerModule';
 import { LoggerModule } from './modules/logger/types';
-import loggerModule from './modules/logger';
-import ServiceRegistryLunaRoute from './service-registry/routes/v1/luna';
-import compression from 'compression';
-import { LoadBalancerModule, LoadBalancerType } from './modules/load-balancer/types';
-import loadBalancerSubModules from './modules/load-balancer';
-import nginxConfigModule from './modules/nginx-config';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import { Logger } from 'tslog';
-import shelljs from 'shelljs';
-const NginxConfFile = require('nginx-conf').NginxConfFile;
-import fsPromise from 'fs/promises';
-
-import apiGatewayModules from './modules/api-gateway';
-import { NginxConfigModule } from './modules/nginx-config/types';
-import { IExecuteable } from './common/interfaces/IExecuteable';
-
-export { container }
-
-/** MODULES */
-
-container.register<NginxConfigModule>("NginxConfigModule", {
-    useClass: nginxConfigModule
-}, { lifecycle: Lifecycle.Singleton });
-
-container.register<ServiceModule>("ServiceModule", {
-    useClass: serviceModule
-}, { lifecycle: Lifecycle.ContainerScoped });
-
-container.register<LoggerModule>("LoggerModule", {
-    useClass: loggerModule
-}, { lifecycle: Lifecycle.ContainerScoped });
-
-/**
- * Injects the modules that is found with the same enum as the config
- */
-
-let loadBalancerModule = loadBalancerSubModules.find(submodule => submodule.gateway === apiGatewayConfig.apiGateway)?.balancerModules
-                                               .find(modules => modules.type === apiGatewayConfig.balancer)?.module;
-                                               
-
-if (loadBalancerModule == null) {
-    throw new Error(`The Load balancer Type '${LoadBalancerType[apiGatewayConfig.balancer as number]}' in config does not match any of the supported types for gateway ${ApiGatewayType[apiGatewayConfig.apiGateway as number]}. To use the default load balancer for the gateway, use 'Default' type.`);
-}
-
-container.register<typeof loadBalancerModule>("LoadBalancerModule", {
-    useClass: loadBalancerModule
-}, { lifecycle: Lifecycle.Singleton })
-
-let apiGatewayModule = apiGatewayModules.find(moduleType => moduleType.type === apiGatewayConfig.apiGateway)?.module;
-
-if (apiGatewayModule == null) {
-    throw new Error(`The Api Gateway Type '${ApiGatewayType[apiGatewayConfig.apiGateway as number]}' in config does not match any of the supported types.`);
-}
-
-container.register<IExecuteable>("ApiGatewayModule", {
-    useClass: apiGatewayModule
-}, { lifecycle: Lifecycle.ContainerScoped });
+import { ServiceModule } from './modules/service/types';
+import config from './config';
+import { ExpressRegistryComponent } from './components/registry/express/express';
+import { NginxConfigModule } from "./modules/nginxConfig/types";
+import http from 'http';
+import https from 'https';
+import { NginxConfModule } from "./modules/nginxConfig/nginxConfModule";
+import axios, { AxiosResponse } from "axios";
+import { RequestModule } from "./modules/request/types";
+import { AxiosRequestModule } from "./modules/request/axiosModule";
+import { ExpressGatewayComponent } from "./components/gateway/express/express";
+import { MemoryServiceModule } from "./modules/service/memory";
+import { NginxBalancerComponent } from "./components/balancer/nginx/nginx";
+import { LunaBalancerComponent } from "./components/balancer/luna/luna";
+import fs from 'fs/promises';
+import shellJS from 'shelljs';
+import { NginxConfFile } from 'nginx-conf';
+import { NginxGatewayComponent } from "./components/gateway/nginx/nginx";
+import { ApiGatewayType } from "./components/gateway/types";
 
 
-/** MIDDLEWARES */
+const httpAgent = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
 
-container.register<Middleware>("OfflineMiddleware", {
-    useValue: offlineMiddleware
+
+// Values
+
+container.register(TOKENS.values.expressApp, {
+    useValue: express()
 });
 
-container.register<Middleware>("AuthMiddleware", {
-    useValue: authMiddleware
-});
-
-
-/** ROUTES */
-
-// ServiceRegistry
-container.register<ServiceRegistryRoute>("ServiceRegistryRoute", {
-    useClass: ServiceRegistryUpdateRoute
-});
-
-container.register<ServiceRegistryRoute>("ServiceRegistryRoute", {
-    useClass: ServiceRegistryLunaRoute
-});
-
-
-/** FUNCTIONS */
-
-
-container.register("ExpressDefaultFunction", {
-    useValue: express
-});
-
-container.register("ExpressRouterFunction", {
+container.register(TOKENS.values.expressRouter, {
     useValue: express.Router
 });
 
-container.register("ExpressHttpProxy", {
-    useValue: expressHttpProxy
+
+const tsLogger = new Logger();
+
+function logToTransport (logObject: ILogObject) {
+    fs.appendFile("logs", JSON.stringify(logObject) + "/r/n");
+}
+
+tsLogger.attachTransport(
+    {
+      silly: logToTransport,
+      debug: logToTransport,
+      trace: logToTransport,
+      info: logToTransport,
+      warn: logToTransport,
+      error: logToTransport,
+      fatal: logToTransport,
+    },
+    "debug"
+  );
+
+container.register(TOKENS.values.tsLogger, {
+    useValue: tsLogger
 });
 
-container.register("ExpressCORSFunction", {
-    useValue: cors
+container.register(TOKENS.values.config, {
+    useValue: config
 });
 
-container.register("ExpressGzipFunction", {
-    useValue: compression
+container.register(TOKENS.values.axiosClient, {
+    useValue: axios.create({
+        httpsAgent,
+        httpAgent
+    })
 });
 
-container.register("CreateProxyMiddleware", {
-    useValue: createProxyMiddleware
+container.register(TOKENS.values.fsAsync, {
+    useValue: fs
 });
 
+container.register(TOKENS.values.shell, {
+    useValue: shellJS
+});
 
-/** DEPENDENCIES */
-container.register<typeof NginxConfFile>('NginxConf', {
+container.register(TOKENS.values.nginxConf, {
     useValue: NginxConfFile
 });
 
-container.register<typeof shelljs>('ShellJs', {
-    useValue: shelljs
+// Modules
+
+container.register<ServiceModule>(TOKENS.modules.service, {
+    useClass: MemoryServiceModule
+}, { lifecycle: Lifecycle.ContainerScoped });
+
+container.register<LoggerModule>(TOKENS.modules.logger, {
+    useClass: TSLoggerModule
 });
 
-container.register<typeof fsPromise>('FsPromise', {
-    useValue: fsPromise
+container.register<RequestModule>(TOKENS.modules.request, {
+    useClass: AxiosRequestModule
+});
+
+container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
+    useClass: NginxConfModule
+})
+
+/** COMPONENTS */
+
+container.register(TOKENS.components.registry.component, {
+    useClass: ExpressRegistryComponent
+}, {
+    lifecycle: Lifecycle.ContainerScoped
+});
+
+if (config.gateway == ApiGatewayType.Luna) {
+    container.register(TOKENS.components.gateway.component, {
+        useClass: ExpressGatewayComponent
+    }, {
+        lifecycle: Lifecycle.ContainerScoped
+    });
+} else {
+    container.register(TOKENS.components.gateway.component, {
+        useClass: NginxGatewayComponent
+    }, {
+        lifecycle: Lifecycle.ContainerScoped
+    });
+}
+
+container.register(TOKENS.components.balancer.nginx, {
+    useClass: NginxBalancerComponent
+});
+
+container.register(TOKENS.components.balancer.luna, {
+    useClass: LunaBalancerComponent
+});
+
+import expressRegistryComponentRoutes from './components/registry/express/routes';
+import expressGatewayComponentRoutes from './components/gateway/express/routes';
+
+container.register(TOKENS.components.registry.routes, {
+    useValue: expressRegistryComponentRoutes
+});
+
+container.register(TOKENS.components.gateway.routes, {
+    useValue: expressGatewayComponentRoutes
 });
 
 
-/** VALUES */
-
-container.register<Configuration>("ServiceRegistryConfig", {
-    useValue: serviceRegistryConfig
-});
-
-container.register<Configuration>("ApiGatewayConfig", {
-    useValue: apiGatewayConfig
-});
-
-container.register<Function>("ExpressBodyParser", {
-    useValue: express.json
-});
-
-container.register<Logger>("TslogLogger", {
-    useValue: new Logger()
-});
-
-container.register<string>("PathToNginxConfigFile",{
-    useValue: apiGatewayConfig.nginx?.confFilePath as string
-}); 
+export { container }

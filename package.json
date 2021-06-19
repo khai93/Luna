@@ -7,7 +7,10 @@
   "author": "khai93 <33293519+khai93@users.noreply.github.com>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node ./src/index.ts"
+    "start": "ts-node --compiler ttypescript ./src/app.ts",
+    "test": "jest",
+    "test:unit": "jest --group=unit",
+    "test:integration": "jest --group=integration"
   },
   "dependencies": {
     "@types/bcrypt": "^3.0.1",
@@ -16,8 +19,9 @@
     "@types/express": "^4.17.11",
     "@types/express-http-proxy": "^1.6.1",
     "@types/glob": "^7.1.3",
-    "@types/node": "^14.14.41",
+    "@types/jest": "^26.0.23",
     "@types/shelljs": "^0.8.8",
+    "@types/supertest": "^2.0.11",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
     "compression": "^1.7.4",
@@ -29,15 +33,22 @@
     "http-proxy-middleware": "^1.3.0",
     "nginx-conf": "^2.0.0",
     "node-watch": "^0.7.1",
+    "prettier": "^2.3.0",
     "reflect-metadata": "^0.1.13",
     "shelljs": "^0.8.4",
+    "supertest": "^6.1.3",
+    "ts-jest": "^26.5.6",
     "tslog": "^3.2.0",
     "tsyringe": "^4.5.0",
     "typescript": "^4.2.4"
   },
   "devDependencies": {
+    "@zerollup/ts-transform-paths": "^1.7.18",
     "jest": "^26.6.3",
+    "jest-runner-groups": "^2.0.1",
     "ts-node": "^9.1.1",
+    "ts-transformer-imports": "^0.4.3",
+    "ttypescript": "^1.5.12",
     "typed-emitter": "^1.3.1"
   }
 }

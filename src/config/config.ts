@@ -1,57 +1,18 @@
 import dotenv from 'dotenv';
-import { LoadBalancerType } from '../modules/load-balancer/types';
+import { LoadBalancerType } from 'src/components/balancer/types';
+import { ApiGatewayType } from 'src/components/gateway/types';
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'development'}` });
 
-export enum ApiGatewayType {
-    Luna,
-    Nginx
-}
-
-export type Configuration = {
+export const config = {
     server: {
-        port: number,
-        auth?: {
-            username: string,
-            password: string
-        }
+        port: parseInt(getEnvironmentVariable("LUNA_PORT", false, "4000") as string)
     },
-    registry?: {
-        // RATE IN SECONDS
-        heartbeat_rate: number
-    },
-    balancer?: LoadBalancerType | null,
-    apiGateway?: ApiGatewayType | ApiGatewayType.Luna,
-    nginx?: {
-        confFilePath: string
-    }
-}
-
-export const apiGatewayConfig: Configuration = {
-    /**
-    * Decides whether or not to use Luna's built-in apigateway or nginx, the default is luna
-    */
-    apiGateway: ApiGatewayType[getEnvironmentVariable("API_GATEWAY", false, "Luna") as keyof typeof ApiGatewayType],
-    server: {
-        port: parseInt(getEnvironmentVariable("API_GATEWAY_PORT", false, "8080") as string)
-    },
-    balancer: LoadBalancerType[getEnvironmentVariable("SERVICE_REGISTRY_BALANCER_METHOD", false, "RoundRobin") as keyof typeof LoadBalancerType],
     nginx: {
-        confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, undefined) as string
-    }
-}
-
-export const serviceRegistryConfig: Configuration = {
-    server: {
-        port: parseInt(getEnvironmentVariable("SERVICE_REGISTRY_PORT", false, "3000") as string),
-        auth: {
-            username: getEnvironmentVariable("SERVICE_REGISTRY_AUTH_USERNAME", false, "") as string,
-            password: getEnvironmentVariable("SERVICE_REGISTRY_AUTH_PASSWORD", false, "") as string,
-        }
+        confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, "")
     },
-    registry: {
-        heartbeat_rate: parseInt(getEnvironmentVariable("SERVICE_REGISTRY_HEARTBEAT_RATE", false, "30") as string)
-    }
+    balancer: LoadBalancerType[getEnvironmentVariable("LOAD_BALANCER_TYPE", false, "RoundRobin") as keyof typeof LoadBalancerType],
+    gateway: ApiGatewayType[getEnvironmentVariable("API_GATEWAY_TYPE", false, "Luna") as keyof typeof ApiGatewayType]
 }
 
 export function getEnvironmentVariable(varName: string, required?: boolean, defaultValue?: string)  {

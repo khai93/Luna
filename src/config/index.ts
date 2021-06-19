@@ -1,6 +1,3 @@
-import { serviceRegistryConfig, apiGatewayConfig } from './config';
+import { config } from "./config";
 
-export default {
-    serviceRegistryConfig,
-    apiGatewayConfig
-};
+export default config;
