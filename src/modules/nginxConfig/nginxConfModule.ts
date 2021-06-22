@@ -190,12 +190,8 @@ export class NginxConfModule implements NginxConfigModule {
 
         const serviceLocationDirectives: NginxConfigDirective[] = [
             {
-                name: 'rewrite',
-                params: [`/gateway/services/${serviceName.value}/(.*)`, "/$1", "break"]
-            },
-            {
                 name: "proxy_pass", 
-                params: [`http://${this.getServiceUpstreamKey(serviceName)}`]
+                params: [`http://${this.getServiceUpstreamKey(serviceName)}/`]
             }
         ]
 
