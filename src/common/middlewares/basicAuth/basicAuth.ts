@@ -3,7 +3,6 @@ import config from 'src/config';
 import basicAuth from 'express-basic-auth';
 
 export const basicAuthMiddleware = (): RequestHandler => {
-    console.log("HELLO");
     return basicAuth({
         challenge: true,
         users: {
