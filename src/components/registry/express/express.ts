@@ -1,4 +1,5 @@
 import express, { application, Router } from "express";
+import basicAuthMiddleware from "src/common/middlewares/basicAuth/";
 import Version from "src/common/version";
 import { TOKENS } from "src/di";
 import { inject, injectable } from "tsyringe";
@@ -18,6 +19,7 @@ export class ExpressRegistryComponent implements IExecutable {
     }
 
     execute(): void {
+        this.registryRouterV1.use(basicAuthMiddleware());
         for (const route of this.registryRoutes) {
             if (route.version.equals(new Version("1"))) {
                 route.execute(this.registryRouterV1);
