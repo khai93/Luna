@@ -1,6 +1,7 @@
 import { Request, Router } from "express";
 import InstanceId from "src/common/instanceId";
 import { IExpressRoute } from "src/common/interfaces/IExpressRoute";
+import { basicAuthMiddleware } from "src/common/middlewares/basicAuth/basicAuth";
 import catchErrorAsync from "src/common/middlewares/catchErrorAsync";
 import { ServiceInfo } from "src/common/serviceInfo";
 import { TOKENS } from "src/di";

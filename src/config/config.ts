@@ -6,7 +6,11 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV?.toLowerCase() || 'developmen
 
 export const config = {
     server: {
-        port: parseInt(getEnvironmentVariable("LUNA_PORT", false, "4000") as string)
+        port: parseInt(getEnvironmentVariable("LUNA_PORT", false, "4000") as string),
+        basicAuth: {
+            username: getEnvironmentVariable("LUNA_AUTH_USERNAME", false, "admin"),
+            password: getEnvironmentVariable("LUNA_AUTH_PASSWORD", false, "" )
+        }
     },
     nginx: {
         confFilePath: getEnvironmentVariable("NGINX_CONFIG_FILE_PATH", false, "")
