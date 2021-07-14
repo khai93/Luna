@@ -6,14 +6,14 @@
 
 import InstanceId from '../../common/instanceId'
 import { Name } from '../../common/name'
-import { ServiceInfo } from '../../common/serviceInfo'
-import { ServiceInfoRaw } from '../../common/serviceInfo/serviceInfo'
+import { Instance } from '../../common/instance'
 import { MemoryServiceModule } from './memory'
+import { InstanceRaw } from 'src/common/Instance/Instance'
 
 let serviceModule = new MemoryServiceModule()
 
-const fakeServiceInfo = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock:0.0.0.0:80').raw,
+const fakeInstance = new Instance({
+    instanceId: InstanceId.fromString('mock:0.0.0.0:80').toString(),
     name: 'mockName',
     description: 'mockDesc',
     version: '1',
@@ -25,8 +25,8 @@ const fakeServiceInfo = new ServiceInfo({
     last_heartbeat: 0,
 })
 
-const fakeServiceInfo2 = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock2:0.0.0.0:80').raw,
+const fakeInstance2 = new Instance({
+    instanceId: InstanceId.fromString('mock2:0.0.0.0:80').toString(),
     name: 'mockName',
     description: 'mockDesc',
     version: '1',
@@ -38,8 +38,8 @@ const fakeServiceInfo2 = new ServiceInfo({
     last_heartbeat: 0,
 })
 
-const fakeServiceInfo3 = new ServiceInfo({
-    instanceId: InstanceId.fromString('mock3:0.0.0.0:80').raw,
+const fakeInstance3 = new Instance({
+    instanceId: InstanceId.fromString('mock3:0.0.0.0:80').toString(),
     name: 'mockName',
     description: 'mockDesc',
     version: '1',
@@ -60,27 +60,27 @@ describe('Service Module: Memory', () => {
         it('should add service to database', async () => {
             expect.assertions(1)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             return expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
-            ).resolves.toEqual(fakeServiceInfo)
+            ).resolves.toEqual(fakeInstance)
         })
 
         it('should reject when adding a service that already exists', async () => {
             expect.assertions(2)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             await expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
-            ).resolves.toEqual(fakeServiceInfo)
+            ).resolves.toEqual(fakeInstance)
             await expect(
-                serviceModule.add(fakeServiceInfo),
+                serviceModule.add(fakeInstance),
             ).rejects.toMatchInlineSnapshot(
                 `"Attempted to add service that already exists."`,
             )
@@ -91,27 +91,27 @@ describe('Service Module: Memory', () => {
         it("should update the service with instanceId 'mock:0.0.0.0:8'", async () => {
             expect.assertions(1)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
-            const updatedServiceInfo = new ServiceInfo({
-                ...fakeServiceInfo.raw,
+            const updatedInstance = new Instance({
+                ...fakeInstance.raw,
                 status: 'DOWN',
-            } as ServiceInfoRaw)
+            } as InstanceRaw)
 
-            await serviceModule.update(updatedServiceInfo)
+            await serviceModule.update(updatedInstance)
 
             return expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
-            ).resolves.toEqual(updatedServiceInfo)
+            ).resolves.toEqual(updatedInstance)
         })
 
         it('should reject when called with a instanceid that does on exist on the database', () => {
             expect.assertions(1)
 
             return expect(
-                serviceModule.update(fakeServiceInfo),
+                serviceModule.update(fakeInstance),
             ).rejects.toThrowErrorMatchingInlineSnapshot(`undefined`)
         })
     })
@@ -120,19 +120,19 @@ describe('Service Module: Memory', () => {
         it("should remove the service with instanceId 'mock:0.0.0.0:8'", async () => {
             expect.assertions(2)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             await expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
-            ).resolves.toEqual(fakeServiceInfo)
+            ).resolves.toEqual(fakeInstance)
 
-            await serviceModule.remove(fakeServiceInfo.value.instanceId)
+            await serviceModule.remove(fakeInstance.value.instanceId)
 
             await expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
             ).resolves.toBeUndefined()
         })
@@ -147,16 +147,16 @@ describe('Service Module: Memory', () => {
     });
 
     describe('#findByInstanceId', () => {
-        it("should return fakeServiceInfo object when called with instanceId 'mock:0.0.0.0:8'", async () => {
+        it("should return fakeInstance object when called with instanceId 'mock:0.0.0.0:8'", async () => {
             expect.assertions(1)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             await expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
-            ).resolves.toEqual(fakeServiceInfo)
+            ).resolves.toEqual(fakeInstance)
         })
 
         it('should return null when called with instanceId that does not exist on the database', () => {
@@ -164,20 +164,20 @@ describe('Service Module: Memory', () => {
 
             return expect(
                 serviceModule.findByInstanceId(
-                    fakeServiceInfo.value.instanceId,
+                    fakeInstance.value.instanceId,
                 ),
             ).resolves.toBeUndefined()
         })
     });
 
     describe('#findAllByName', () => {
-        it("should return an array of length 1 when called with the fakeServiceInfo's name", async () => {
+        it("should return an array of length 1 when called with the fakeInstance's name", async () => {
             expect.assertions(1)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             await expect(
-                serviceModule.findAllByName(fakeServiceInfo.value.name),
+                serviceModule.findAllByName(fakeInstance.value.name),
             ).resolves.toHaveLength(1)
         })
 
@@ -186,9 +186,9 @@ describe('Service Module: Memory', () => {
 
             await expect(serviceModule.getAll()).resolves.toHaveLength(0)
 
-            await serviceModule.add(fakeServiceInfo)
-            await serviceModule.add(fakeServiceInfo2)
-            await serviceModule.add(fakeServiceInfo3)
+            await serviceModule.add(fakeInstance)
+            await serviceModule.add(fakeInstance2)
+            await serviceModule.add(fakeInstance3)
 
             await expect(
                 serviceModule.findAllByName(new Name('mockName')),
@@ -200,7 +200,7 @@ describe('Service Module: Memory', () => {
 
             await expect(
                 serviceModule.findAllByName(
-                    fakeServiceInfo.value.name,
+                    fakeInstance.value.name,
                 ),
             ).resolves.toHaveLength(0)
         })
@@ -218,7 +218,7 @@ describe('Service Module: Memory', () => {
 
             await expect(serviceModule.getAll()).resolves.toHaveLength(0)
 
-            await serviceModule.add(fakeServiceInfo)
+            await serviceModule.add(fakeInstance)
 
             await expect(serviceModule.getAll()).resolves.toHaveLength(1)
         })
@@ -228,9 +228,9 @@ describe('Service Module: Memory', () => {
 
             await expect(serviceModule.getAll()).resolves.toHaveLength(0)
 
-            await serviceModule.add(fakeServiceInfo)
-            await serviceModule.add(fakeServiceInfo2)
-            await serviceModule.add(fakeServiceInfo3)
+            await serviceModule.add(fakeInstance)
+            await serviceModule.add(fakeInstance2)
+            await serviceModule.add(fakeInstance3)
 
             await expect(serviceModule.getAll()).resolves.toHaveLength(3)
         })

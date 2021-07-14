@@ -1,6 +1,6 @@
 import { IExecutable } from "src/common/interfaces/IExecutable";
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import config from "src/config";
 import { TOKENS } from "src/di";
 import { ServiceModule } from "src/modules/service/types";
@@ -34,7 +34,7 @@ export class LunaBalancerComponent {
         }
     }
     
-    getNextInstance(serviceName: Name): Promise<ServiceInfo> {
+    getNextInstance(serviceName: Name): Promise<Instance> {
         return new Promise(async (resolve, reject) => {
             const balancedInstance = await this.balancer.balanceService(serviceName);
 

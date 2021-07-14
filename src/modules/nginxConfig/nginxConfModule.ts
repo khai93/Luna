@@ -1,13 +1,13 @@
 import { NginxConfFile } from "nginx-conf";
-import { NginxConfItem } from "nginx-conf/dist/src/conf";
-import EventEmitter from "node:events";
 import TypedEmitter from "typed-emitter"
+import EventEmitter from "events";
 import { inject, injectable } from "tsyringe";
 import { NginxConfigContext, NginxConfigDirective, NginxConfigModule, NginxConfigModuleError, NginxConfigContextEvents } from "./types";
-import { ServiceInfo } from "../../common/serviceInfo";
+import { Instance } from "../../common/instance";
 import { Name } from "src/common/name";
 import { TOKENS } from "src/di";
 import config from "src/config";
+import { NginxConfItem } from "nginx-conf/dist/src/conf";
 
 export class NginxConfModuleContext extends (EventEmitter as new () => TypedEmitter<NginxConfigContextEvents>) implements NginxConfigContext {
     private _context: NginxConfItem;

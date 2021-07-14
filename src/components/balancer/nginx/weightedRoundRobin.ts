@@ -3,7 +3,7 @@ import { TOKENS } from "src/di";
 import { LoggerModule } from "src/modules/logger/types";
 import { ServiceModule } from "src/modules/service/types";
 import { autoInjectable, inject, injectable } from "tsyringe";
-import { ServiceInfo } from "../../../common/serviceInfo";
+import { Instance } from "../../../common/instance";
 import { Status } from "../../../common/status/status";
 import { NginxConfigContext, NginxConfigDirective, NginxConfigModule } from "src/modules/nginxConfig/types";
 import { LoadBalancer, LoadBalancerError } from "../types";
@@ -18,7 +18,7 @@ export class NginxWeightedRoundRobinBalancer implements LoadBalancer {
         @inject(TOKENS.modules.nginxConfig) private nginxConfigModule?: NginxConfigModule
     ){ }
 
-    async balanceService(serviceName: Name, currentInstance: ServiceInfo): Promise<ServiceInfo> {
+    async balanceService(serviceName: Name, currentInstance: Instance): Promise<Instance> {
         if (this._serverContext == null) {
             this._serverContext = await this.nginxConfigModule!.getServerContext();
         }

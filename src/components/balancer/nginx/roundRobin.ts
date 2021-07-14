@@ -1,5 +1,5 @@
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import { TOKENS } from "src/di";
 import { LoggerModule } from "src/modules/logger/types";
 import { NginxConfigContext, NginxConfigModule } from "src/modules/nginxConfig/types";
@@ -18,7 +18,7 @@ export class NginxRoundRobinBalancer implements LoadBalancer {
         @inject(TOKENS.modules.nginxConfig) private nginxConfigModule?: NginxConfigModule    
     ) { }
 
-    async balanceService(serviceName: Name, currentInstance?: ServiceInfo): Promise<ServiceInfo> {
+    async balanceService(serviceName: Name, currentInstance?: Instance): Promise<Instance> {
         if (currentInstance == null) {
             throw new LoadBalancerError("Current Instance must be passed into nginx round robin module");
         }
