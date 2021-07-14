@@ -1,33 +1,33 @@
 import EventEmitter from "node:events";
 import InstanceId from "../../common/instanceId";
 import { Name } from "../../common/name";
-import { ServiceInfo } from "../../common/serviceInfo";
+import { Instance } from "../../common/instance";
 
 export interface ServiceModule extends EventEmitter {
     /**
      * Add a service to the database
-     * @param serviceInfo Service to be added
-     * @returns {Promise<ServiceInfo | null>} added service info or null if it couldn't add the service
+     * @param Instance Service to be added
+     * @returns {Promise<Instance | null>} added service info or null if it couldn't add the service
      */
-    add(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
+    add(Instance: Instance): Promise<Instance>;
 
     /**
      * Updates a service based on its instanceId in the object.
      * InstanceId's cannot change between services.
-     * @param serviceInfo Service to update
-     * @returns updated serviceInfo
+     * @param Instance Service to update
+     * @returns updated Instance
      */
-    update(serviceInfo: ServiceInfo): Promise<ServiceInfo>;
+    update(Instance: Instance): Promise<Instance>;
     remove(instanceId: InstanceId): Promise<void>;
-    findByInstanceId(instanceId: InstanceId): Promise<ServiceInfo | undefined>;
-    findAllByName(serviceName: Name): Promise<ServiceInfo[]>;
-    getAll(): Promise<ServiceInfo[]>;
+    findByInstanceId(instanceId: InstanceId): Promise<Instance | undefined>;
+    findAllByName(serviceName: Name): Promise<Instance[]>;
+    getAll(): Promise<Instance[]>;
 }
 
 export interface ServiceModuleEvents {
-    update: (updatedServiceInfo: ServiceInfo) => void,
+    update: (updatedInstance: Instance) => void,
     remove: (removedServiceName: InstanceId) => void,
-    add: (addedServiceInfo: ServiceInfo) => void
+    add: (addedInstance: Instance) => void
 }
 
 export class ServiceModuleAddError extends Error {

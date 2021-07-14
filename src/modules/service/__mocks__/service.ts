@@ -1,7 +1,7 @@
 import InstanceId from "src/common/instanceId";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 
-export const fakeServiceInfo = new ServiceInfo({
+export const fakeInstance = new Instance({
     instanceId: 'mock:0.0.0.0:80',
     name: 'mock',
     description: 'mockDesc',
@@ -14,7 +14,7 @@ export const fakeServiceInfo = new ServiceInfo({
     last_heartbeat: 0,
 });
 
-export const fakeServiceInfo2 = new ServiceInfo({
+export const fakeInstance2 = new Instance({
     instanceId: 'mock2:0.0.0.0:80',
     name: 'mock2',
     description: 'mockDesc',
@@ -27,7 +27,7 @@ export const fakeServiceInfo2 = new ServiceInfo({
     last_heartbeat: 0,
 });
 
-export const fakeServiceInfo3 = new ServiceInfo({
+export const fakeInstance3 = new Instance({
     instanceId: 'mock3:0.0.0.0:80',
     name: 'mock3',
     description: 'mockDesc',
@@ -41,16 +41,16 @@ export const fakeServiceInfo3 = new ServiceInfo({
 });
 
 export let fakeServices = [
-    fakeServiceInfo,
-    fakeServiceInfo2,
-    fakeServiceInfo3
+    fakeInstance,
+    fakeInstance2,
+    fakeInstance3
 ];
 
 export const resetServiceModuleMocks = () => {
     fakeServices = [
-        fakeServiceInfo,
-        fakeServiceInfo2,
-        fakeServiceInfo3
+        fakeInstance,
+        fakeInstance2,
+        fakeInstance3
     ];
 
     mockAdd.mockClear();

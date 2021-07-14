@@ -1,5 +1,5 @@
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import { TOKENS } from "src/di";
 import { LoggerModule } from "src/modules/logger/types";
 import { ServiceModule } from "src/modules/service/types";
@@ -16,7 +16,7 @@ export class LunaNoneBalancer implements LoadBalancer {
         this.logger?.log("Load Balancer loaded with None method.");
     }
 
-    balanceService(serviceName: Name): Promise<ServiceInfo> {
+    balanceService(serviceName: Name): Promise<Instance> {
         return new Promise(async (resolve, reject) => {
             const serviceInstances = await this.serviceModule?.findAllByName(serviceName);
 

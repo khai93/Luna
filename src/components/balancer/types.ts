@@ -1,5 +1,5 @@
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 
 export enum LoadBalancerType {
     RoundRobin,
@@ -8,7 +8,7 @@ export enum LoadBalancerType {
 }
 
 export interface LoadBalancer {
-    balanceService(serviceName: Name, currentInstance?: ServiceInfo): Promise<ServiceInfo>;
+    balanceService(serviceName: Name, currentInstance?: Instance): Promise<Instance>;
 }
 
 export class LoadBalancerError extends Error {

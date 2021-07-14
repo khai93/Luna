@@ -4,7 +4,7 @@ import { LoggerModule } from "src/modules/logger/types";
 import { inject, injectable } from "tsyringe";
 import shellJS from 'shelljs';
 import config from "src/config";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import { ServiceModule } from "src/modules/service/types";
 import { LoadBalancer } from "src/components/balancer/types";
 import InstanceId from "src/common/instanceId";
@@ -57,9 +57,9 @@ export class NginxGatewayComponent implements IExecutable {
     }
 
     private setUpListeners() {
-        this.serviceModule.on('update', (updatedServiceInfo: ServiceInfo) => {
-            this.logger.log(`Service [${updatedServiceInfo.value.name.value}] updated.`);
-            this.balancerComponent.balanceService(updatedServiceInfo.value.name, updatedServiceInfo);
+        this.serviceModule.on('update', (updatedInstance: Instance) => {
+            this.logger.log(`Service [${updatedInstance.value.name.value}] updated.`);
+            this.balancerComponent.balanceService(updatedInstance.value.name, updatedInstance);
             this.requestNginxReload();
         });
 
@@ -67,7 +67,7 @@ export class NginxGatewayComponent implements IExecutable {
             this.logger.log(`Service [${removedInstanceId.raw.serviceName}] deregistered.`);
         });
 
-        this.serviceModule.on('add', (addedInstance: ServiceInfo) => {
+        this.serviceModule.on('add', (addedInstance: Instance) => {
             this.logger.log(`Service [${addedInstance.value.name.value}] registered.`);
             this.balancerComponent.balanceService(addedInstance.value.name, addedInstance);
             this.requestNginxReload();

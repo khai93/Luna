@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { Name } from "src/common/name";
-import { ServiceInfo } from "../../common/serviceInfo";
+
 
 export type NginxConfigDirective = {
     name: string,

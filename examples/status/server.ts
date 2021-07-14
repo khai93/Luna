@@ -1,12 +1,12 @@
 import express from 'express';
 import axios from 'axios';
 
-import serviceInfo from './service.json';
+import Instance from './service.json';
 
 const app = express();
 
 const port = parseInt(process.env.PORT as string) || 3023;
-const instanceId = serviceInfo.name + ":" + "localhost:" + port;
+const instanceId = Instance.name + ":" + "localhost:" + port;
 app.get("/", (req, res) => {
     console.log("Instance:" + port + " called");
     res.send("OK");
@@ -14,7 +14,7 @@ app.get("/", (req, res) => {
 
 app.listen(port, () => {
     axios.post("http://localhost:4000/registry/v1/services/" + instanceId, {
-        ...serviceInfo,
+        ...Instance,
         instanceId,
         url: "http://localhost:" + port,
         status: "OK",
@@ -33,7 +33,7 @@ app.listen(port, () => {
 function startHeartbeats() {
     setInterval(() => {
         axios.put("http://localhost:4000/registry/v1/services/" + instanceId, {
-        ...serviceInfo,
+        ...Instance,
         instanceId,
         url: "http://localhost:" + port,
         status: "OK",

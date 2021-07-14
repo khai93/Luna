@@ -1,5 +1,5 @@
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import config from "src/config";
 import { TOKENS } from "src/di";
 import { inject, injectable } from "tsyringe";
@@ -29,7 +29,7 @@ export class NginxBalancerComponent implements LoadBalancer {
         }
     }
 
-    balanceService(serviceName: Name, currentInstance?: ServiceInfo): Promise<ServiceInfo> {
+    balanceService(serviceName: Name, currentInstance?: Instance): Promise<Instance> {
         return this.balancer.balanceService(serviceName, currentInstance);
     }
 }

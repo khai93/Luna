@@ -1,5 +1,5 @@
 import { Name } from "src/common/name";
-import { ServiceInfo } from "src/common/serviceInfo";
+import { Instance } from "src/common/instance";
 import { TOKENS } from "src/di";
 import { LoggerModule } from "src/modules/logger/types";
 import { ServiceModule } from "src/modules/service/types";
@@ -15,7 +15,7 @@ export class LunaWeightedRoundRobinBalancer implements LoadBalancer {
         this.logger?.log("Load Balancer loaded with Weighted Round Robin method.");
     }
 
-    balanceService(serviceName: Name): Promise<ServiceInfo> {
+    balanceService(serviceName: Name): Promise<Instance> {
         return new Promise(async (resolve, reject) => {
             const serviceInstances = await this.serviceModule?.findAllByName(serviceName);
 
@@ -36,7 +36,7 @@ export class LunaWeightedRoundRobinBalancer implements LoadBalancer {
         });
     }
 
-    private getTotalInstanceWeight(instances: ServiceInfo[]) {
+    private getTotalInstanceWeight(instances: Instance[]) {
         let totalInstanceWeight = 0;
 
         for(const instance of instances) {
@@ -49,7 +49,7 @@ export class LunaWeightedRoundRobinBalancer implements LoadBalancer {
         return totalInstanceWeight;
     }
 
-    private getInstanceByWeightThreshold(instances: ServiceInfo[], threshold: number): ServiceInfo {
+    private getInstanceByWeightThreshold(instances: Instance[], threshold: number): Instance {
         let totalWeight = 0;
         
         /**
