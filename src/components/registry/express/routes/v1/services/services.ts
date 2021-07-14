@@ -22,21 +22,29 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
 
     execute(router: Router) {
         router.get("/services", catchErrorAsync(async (req, res) => {
-            const instances = await this.serviceModule!.getAll();
+            const instancesByServiceName = await this.getInstancesByServiceName();
 
-            const instancesByServiceName = instances.reduce<IKeyValuePair<InstanceRaw[]>>((acc, curr) => {
-                if (acc[curr.value.name.value] == null) {
-                    acc[curr.value.name.value] = [];
-                }
-
-                acc[curr.value.name.value].push(curr.raw);
-
-                return acc;
-            }, {});
-
-            console.log(instancesByServiceName);
-            
             res.render("services", { services: instancesByServiceName });
         }));
+
+        router.get("/services/json", catchErrorAsync(async (req, res) => {
+            const instancesByServiceName = await this.getInstancesByServiceName();
+
+            res.json(instancesByServiceName);
+        }));
     };
+
+    private async getInstancesByServiceName() {
+        const instances = await this.serviceModule!.getAll();
+        
+        return instances.reduce<IKeyValuePair<InstanceRaw[]>>((acc, curr) => {
+            if (acc[curr.value.name.value] == null) {
+                acc[curr.value.name.value] = [];
+            }
+
+            acc[curr.value.name.value].push(curr.raw);
+
+            return acc;
+        }, {});
+    }
 }
