@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>EJS Is Fun</title>
+
+<!-- Load Bulma -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+
+
+<body>
+    <h1 class="title is-1">Luna Registry</h1>
+    <h2 class="subtitle is-4"><%= new Date(Date.now()).toUTCString() %></h2>
+    
+    <div>
+      <% for (let serviceName in services) { %>
+        <div>
+          <% for (let instance of services[serviceName]) { %>
+            <p><%= instance.url %></p>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+    
+</body>
+
+<style>
+  body { padding: 20px }
+</style>
