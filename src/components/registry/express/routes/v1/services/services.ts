@@ -11,7 +11,12 @@ import Version from "../../../../../../common/version";
 import { IKeyValuePair } from "src/common/interfaces/IKeyValuePair";
 import { InstanceRaw } from "src/common/instance/instance";
 
-
+export type FormattedService = {
+    name: string,
+    description: string,
+    status: 'UP' | 'DOWN',
+    instances: InstanceRaw[]
+}
 @autoInjectable()
 export class ExpressRegistryServicesRoute implements IExpressRoute {
     version: Version = new Version("1");
@@ -22,17 +27,35 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
 
     execute(router: Router) {
         router.get("/services", catchErrorAsync(async (req, res) => {
-            const instancesByServiceName = await this.getInstancesByServiceName();
+            const instancesByServiceName = await this.getFormattedServices();
 
             res.render("services", { services: instancesByServiceName });
         }));
 
         router.get("/services/json", catchErrorAsync(async (req, res) => {
-            const instancesByServiceName = await this.getInstancesByServiceName();
+            const instancesByServiceName = await this.getFormattedServices();
 
             res.json(instancesByServiceName);
         }));
     };
+
+    private async getFormattedServices(): Promise<FormattedService[]> {
+        const instances = await this.getInstancesByServiceName();
+        let formattedServices: FormattedService[] = [];
+
+        for (let serviceName in instances) {
+            const isOneInstanceActive = instances[serviceName].some(instance => instance.status === 'OK');
+
+            formattedServices.push({
+                name: serviceName,
+                description: instances[serviceName][0].description,
+                status: isOneInstanceActive ? 'UP' : 'DOWN',
+                instances: instances[serviceName]
+            });
+        }
+
+        return formattedServices;
+    }
 
     private async getInstancesByServiceName() {
         const instances = await this.serviceModule!.getAll();
