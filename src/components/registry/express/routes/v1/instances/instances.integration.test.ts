@@ -11,7 +11,6 @@ import { container, TOKENS } from 'src/di';
 import mockServiceModule, { fakeServices, mockAdd, mockUpdate, mockFindByInstanceId, mockGetAll, mockRemove, resetServiceModuleMocks } from 'src/modules/service/__mocks__/service';
 import InstanceId from 'src/common/instanceId';
 import { ExpressRegistryInstancesRoute } from './instances';
-import { Instance } from 'src/common/instance';
 import { InstanceRaw } from 'src/common/instance/instance';
 
 describe("Express Registry Component: Instances Route", () => {

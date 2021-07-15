@@ -8,7 +8,8 @@ import InstanceId from '../../common/instanceId'
 import { Name } from '../../common/name'
 import { Instance } from '../../common/instance'
 import { MemoryServiceModule } from './memory'
-import { InstanceRaw } from 'src/common/Instance/Instance'
+import { InstanceRaw } from 'src/common/instance/instance'
+
 
 let serviceModule = new MemoryServiceModule()
 

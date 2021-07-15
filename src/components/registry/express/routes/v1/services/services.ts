@@ -8,8 +8,15 @@ import { TOKENS } from "src/di";
 import { ServiceModule } from "src/modules/service/types";
 import { inject, autoInjectable } from "tsyringe";
 import Version from "../../../../../../common/version";
+import { IKeyValuePair } from "src/common/interfaces/IKeyValuePair";
+import { InstanceRaw } from "src/common/instance/instance";
 
-
+export type FormattedService = {
+    name: string,
+    description: string,
+    status: 'UP' | 'DOWN',
+    instances: InstanceRaw[]
+}
 @autoInjectable()
 export class ExpressRegistryServicesRoute implements IExpressRoute {
     version: Version = new Version("1");
@@ -20,10 +27,47 @@ export class ExpressRegistryServicesRoute implements IExpressRoute {
 
     execute(router: Router) {
         router.get("/services", catchErrorAsync(async (req, res) => {
-            const servicesData = await this.serviceModule!.getAll();
-            const rawData = servicesData.map(service => service.raw);
+            const instancesByServiceName = await this.getFormattedServices();
 
-            res.send(rawData);
+            res.render("services", { services: instancesByServiceName });
+        }));
+
+        router.get("/services/json", catchErrorAsync(async (req, res) => {
+            const instancesByServiceName = await this.getFormattedServices();
+
+            res.json(instancesByServiceName);
         }));
     };
+
+    private async getFormattedServices(): Promise<FormattedService[]> {
+        const instances = await this.getInstancesByServiceName();
+        let formattedServices: FormattedService[] = [];
+
+        for (let serviceName in instances) {
+            const isOneInstanceActive = instances[serviceName].some(instance => instance.status === 'OK');
+
+            formattedServices.push({
+                name: serviceName,
+                description: instances[serviceName][0].description,
+                status: isOneInstanceActive ? 'UP' : 'DOWN',
+                instances: instances[serviceName]
+            });
+        }
+
+        return formattedServices;
+    }
+
+    private async getInstancesByServiceName() {
+        const instances = await this.serviceModule!.getAll();
+        
+        return instances.reduce<IKeyValuePair<InstanceRaw[]>>((acc, curr) => {
+            if (acc[curr.value.name.value] == null) {
+                acc[curr.value.name.value] = [];
+            }
+
+            acc[curr.value.name.value].push(curr.raw);
+
+            return acc;
+        }, {});
+    }
 }
