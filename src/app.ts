@@ -23,7 +23,7 @@ const expressErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     loggerModule.error(err);
 
     return res.status(500).send({
-        error: err.toString()
+        error: err.message.toString()
     });
 }
 
