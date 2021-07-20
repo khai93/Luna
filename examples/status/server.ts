@@ -23,7 +23,7 @@ app.listen(port, () => {
         }
     }).then((response) => {
         console.log("REGISTERED INSTANCE:" + port);
-        startHeartbeats();
+        // startHeartbeats();
     }).catch(err => console.error)
     
 

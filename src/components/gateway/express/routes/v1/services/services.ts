@@ -6,6 +6,7 @@ import { Name } from "src/common/name";
 import Version from "src/common/version";
 import { LunaBalancerComponent } from "src/components/balancer/luna/luna";
 import { TOKENS } from "src/di";
+import { HealthCheckModule } from "src/modules/healthCheck/healthCheck";
 import { RequestModule, RequestOptions } from "src/modules/request/types";
 import { ServiceModule } from "src/modules/service/types";
 import { autoInjectable, inject } from "tsyringe";
@@ -17,7 +18,8 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
     constructor(
         @inject(TOKENS.modules.service) private serviceModule?: ServiceModule,
         @inject(TOKENS.modules.request) private requestModule?: RequestModule,
-        @inject(TOKENS.components.balancer.luna) private balancerComponent?: LunaBalancerComponent
+        @inject(TOKENS.components.balancer.luna) private balancerComponent?: LunaBalancerComponent,
+        @inject(TOKENS.modules.healthCheck) private healthCheckModule?: HealthCheckModule
     ) {}
 
     execute(router: Router) {
@@ -30,6 +32,7 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
                 throw new Error("Service name provided has no instances registered.");
             }
 
+            await this.healthCheckModule?.checkServiceInstances(new Name(serviceName));
             const instance = await this.balancerComponent?.getNextInstance(new Name(serviceName));
             
             if (instance == null) {
