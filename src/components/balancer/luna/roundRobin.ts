@@ -5,6 +5,7 @@ import { LoggerModule } from "src/modules/logger/types";
 import { ServiceModule } from "src/modules/service/types";
 import { autoInjectable, inject } from "tsyringe";
 import { LoadBalancer, LoadBalancerError } from "../types";
+import Status from "src/common/status";
 
 export type RoundRobinServiceData = {
     serviceName: Name,
@@ -23,13 +24,15 @@ export class LunaRoundRobinBalancer implements LoadBalancer {
         this.logger?.log("Load Balancer loaded with Round Robin method.");
     }
 
-    balanceService(serviceName: Name): Promise<Instance> {
+    balanceService(serviceName: Name): Promise<Instance | undefined> {
         return new Promise(async (resolve, reject) => {
-            const serviceInstances = await this.serviceModule?.findAllByName(serviceName);
+            let serviceInstances = await this.serviceModule?.findAllByName(serviceName);
 
             if (serviceInstances == null || serviceInstances && serviceInstances.length <= 0) {
                 return new LoadBalancerError("Service does not have any instances registered.");
             }
+
+            serviceInstances = serviceInstances.filter(instance => instance.value.status.equals(new Status("UP")))
 
             /**
              * Service only has one instance for it, no balancing required.

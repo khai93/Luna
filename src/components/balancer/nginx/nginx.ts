@@ -29,7 +29,7 @@ export class NginxBalancerComponent implements LoadBalancer {
         }
     }
 
-    balanceService(serviceName: Name, currentInstance?: Instance): Promise<Instance> {
+    balanceService(serviceName: Name, currentInstance?: Instance): Promise<Instance | undefined> {
         return this.balancer.balanceService(serviceName, currentInstance);
     }
 }

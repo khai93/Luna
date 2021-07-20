@@ -13,7 +13,8 @@ export const TOKENS = {
         service: Symbol(),
         logger: Symbol(),
         nginxConfig: Symbol(),
-        request: Symbol()
+        request: Symbol(),
+        healthCheck: Symbol()
     },
     components: {
         registry: {
@@ -56,7 +57,7 @@ import shellJS from 'shelljs';
 import { NginxConfFile } from 'nginx-conf';
 import { NginxGatewayComponent } from "./components/gateway/nginx/nginx";
 import { ApiGatewayType } from "./components/gateway/types";
-
+import { HealthCheckModule } from "./modules/healthCheck/healthCheck";
 
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
@@ -135,7 +136,11 @@ container.register<RequestModule>(TOKENS.modules.request, {
 
 container.register<NginxConfigModule>(TOKENS.modules.nginxConfig, {
     useClass: NginxConfModule
-})
+});
+
+container.register<HealthCheckModule>(TOKENS.modules.healthCheck, {
+    useClass: HealthCheckModule
+});
 
 /** COMPONENTS */
 
