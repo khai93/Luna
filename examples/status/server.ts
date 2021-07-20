@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(port, () => {
-    axios.post("http://localhost:4000/registry/v1/services/" + instanceId, {
+    axios.post("http://admin@localhost:4000/registry/v1/instances/" + instanceId, {
         ...Instance,
         instanceId,
         url: "http://localhost:" + port,
@@ -32,7 +32,7 @@ app.listen(port, () => {
 
 function startHeartbeats() {
     setInterval(() => {
-        axios.put("http://localhost:4000/registry/v1/services/" + instanceId, {
+        axios.put("http://admin@localhost:4000/registry/v1/instances/" + instanceId, {
         ...Instance,
         instanceId,
         url: "http://localhost:" + port,
