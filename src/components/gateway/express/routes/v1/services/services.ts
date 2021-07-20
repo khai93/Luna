@@ -3,6 +3,7 @@ import { Router } from "express";
 import { IExpressRoute } from "src/common/interfaces/IExpressRoute";
 import catchErrorAsync from "src/common/middlewares/catchErrorAsync";
 import { Name } from "src/common/name";
+import Status from "src/common/status";
 import Version from "src/common/version";
 import { LunaBalancerComponent } from "src/components/balancer/luna/luna";
 import { TOKENS } from "src/di";
@@ -36,7 +37,7 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
             const instance = await this.balancerComponent?.getNextInstance(new Name(serviceName));
             
             if (instance == null) {
-                throw new Error("Balancer unexpectedly could not find an instance");
+                throw new Error("Service is down.");
             }
 
             const splitReqUrl = req.url.split("/services/" + instance.raw.name);

@@ -9,6 +9,7 @@ import { LoadBalancer, LoadBalancerType } from "../types";
 import { LunaNoneBalancer } from "./none";
 import { LunaRoundRobinBalancer } from "./roundRobin";
 import { LunaWeightedRoundRobinBalancer } from "./weightedRoundRobin";
+import { LoggerModule } from "src/modules/logger/types";
 
 
 @injectable()
@@ -17,7 +18,8 @@ export class LunaBalancerComponent {
 
     constructor(
         @inject(TOKENS.modules.service) private serviceModule: ServiceModule,
-        @inject(TOKENS.values.config) private _config: typeof config
+        @inject(TOKENS.values.config) private _config: typeof config,
+        @inject(TOKENS.modules.logger) private loggerModule: LoggerModule
     ){
         switch(_config.balancer) {
             case LoadBalancerType.None:
@@ -34,11 +36,17 @@ export class LunaBalancerComponent {
         }
     }
     
-    getNextInstance(serviceName: Name): Promise<Instance> {
+    getNextInstance(serviceName: Name): Promise<Instance | undefined> {
         return new Promise(async (resolve, reject) => {
-            const balancedInstance = await this.balancer.balanceService(serviceName);
+            try {
+                const balancedInstance = await this.balancer.balanceService(serviceName);
 
-            return resolve(balancedInstance);
+                return resolve(balancedInstance);
+            } catch (e) {
+                this.loggerModule.error(e);
+                
+                return resolve(undefined);
+            }
         });
     }
 }
