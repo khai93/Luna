@@ -42,7 +42,7 @@ export class ExpressRegistryInstancesRoute implements IExpressRoute {
             const foundInstance = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (foundInstance != null) {
-                return res.sendStatus(404);
+                return res.sendStatus(400);
             }
 
             const addedInstance = await this.serviceModule!.add(bodyInstance!);
