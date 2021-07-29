@@ -42,7 +42,7 @@ export class ExpressRegistryInstancesRoute implements IExpressRoute {
             const foundInstance = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (foundInstance != null) {
-                return res.sendStatus(400);
+                return res.sendStatus(404);
             }
 
             const addedInstance = await this.serviceModule!.add(bodyInstance!);
@@ -64,7 +64,7 @@ export class ExpressRegistryInstancesRoute implements IExpressRoute {
             const foundInstance = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (foundInstance == null) {
-                return res.sendStatus(400);
+                return res.sendStatus(404);
             }
 
             const updatedInstance = await this.serviceModule!.update(bodyInstance!);
@@ -82,7 +82,7 @@ export class ExpressRegistryInstancesRoute implements IExpressRoute {
             const foundInstance = await this.serviceModule!.findByInstanceId(instanceIdObject);
 
             if (foundInstance == null) {
-                return res.sendStatus(400);
+                return res.sendStatus(404);
             }
 
             await this.serviceModule!.remove(instanceIdObject);
