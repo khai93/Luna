@@ -39,7 +39,6 @@ export class LunaRoundRobinBalancer implements LoadBalancer {
              * Return the only instance.
              */
             if (serviceInstances.length === 1) {
-                this.logger?.log("RoundRobinModule: Only one instance in list");
                 return resolve(serviceInstances[0]);
             }
 
