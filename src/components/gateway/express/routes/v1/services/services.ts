@@ -40,11 +40,11 @@ export class ExpressGatewayServicesRoute implements IExpressRoute {
                 throw new Error("Service is down.");
             }
 
-            const splitReqUrl = req.url.split("/services/" + instance.raw.name);
-            const instanceUrl = instance.value.url.toString() + (splitReqUrl[splitReqUrl.length - 1] == "/" ? "" : splitReqUrl[splitReqUrl.length - 1]);
+            const splitReqUrl = req.url.split("/services/" + instance.raw.name + "/");
+            const instanceUrl = new URL(splitReqUrl[splitReqUrl.length - 1], instance.value.url.toString());
 
             const proxyRequestOptions: RequestOptions = {
-                url: instanceUrl,
+                url: instanceUrl.toString(),
                 method: req.method,
                 responseType: 'stream',
                 body: req.body,

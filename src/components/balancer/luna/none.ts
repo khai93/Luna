@@ -25,7 +25,7 @@ export class LunaNoneBalancer implements LoadBalancer {
                 return new LoadBalancerError("Service does not have any instances registered.");
             }
 
-            return resolve(serviceInstances.find(instance => instance.value.status.equals(new Status("UP"))));
+            return resolve(serviceInstances.find(instance => instance.value.status.equals(new Status("OK"))));
         })
     }
 }
