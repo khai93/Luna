@@ -24,7 +24,7 @@ export class LunaWeightedRoundRobinBalancer implements LoadBalancer {
                 return new LoadBalancerError("Service does not have any instances registered.");
             }
 
-            serviceInstances = serviceInstances.filter(instance => instance.value.status.equals(new Status("UP")))
+            serviceInstances = serviceInstances.filter(instance => instance.value.status.equals(new Status("OK")))
 
 
             const totalInstanceWeight = this.getTotalInstanceWeight(serviceInstances);

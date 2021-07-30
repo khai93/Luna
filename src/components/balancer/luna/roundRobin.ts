@@ -32,7 +32,7 @@ export class LunaRoundRobinBalancer implements LoadBalancer {
                 return new LoadBalancerError("Service does not have any instances registered.");
             }
 
-            serviceInstances = serviceInstances.filter(instance => instance.value.status.equals(new Status("UP")))
+            serviceInstances = serviceInstances.filter(instance => instance.value.status.equals(new Status("OK")))
 
             /**
              * Service only has one instance for it, no balancing required.
