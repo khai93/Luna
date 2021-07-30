@@ -3,12 +3,13 @@ import express, { application, ErrorRequestHandler } from 'express';
 import { IExecutable } from "./common/interfaces/IExecutable";
 import { LoggerModule } from "./modules/logger/types";
 import config from './config';
+import cors from 'cors';
 
 const expressApp = container.resolve<typeof application>(TOKENS.values.expressApp);
 expressApp.set("view engine", "ejs");
 expressApp.use(express.json());
 expressApp.use(express.urlencoded({ extended: true }));
-
+expressApp.use(cors({ origin: "*" }));
 
 
 const registryComponent = container.resolve<IExecutable>(TOKENS.components.registry.component);
