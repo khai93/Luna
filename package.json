@@ -8,6 +8,8 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node --compiler ttypescript ./src/app.ts",
+    "build": "ttsc -p .",
+    "deploy": "node ./build/src/app.js",
     "test": "jest",
     "test:unit": "jest --group=unit",
     "test:integration": "jest --group=integration"
