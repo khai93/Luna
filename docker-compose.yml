@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: base
+    image: khai52/luna:1
     volumes: 
       - ./src:/app/luna/src
       - ./nodemon.json:/app/luna/nodemon.json
