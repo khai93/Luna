@@ -1,3 +1,9 @@
+/**
+ * Tests Balancer Options Value Object
+ * 
+ * @group unit/common
+ */
+
 import { BalancerOptions, BalancerOptionsNotValidError } from "./balancerOptions";
 
 describe("BalancerOptions class", () => {
