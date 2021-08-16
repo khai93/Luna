@@ -24,7 +24,7 @@ export class BalancerOptions implements IValidatable, IValueObject<BalancerOptio
     }
 
     isValid(): boolean {
-        if (this.value.weight && this.value.weight <= 0) {
+        if (this.value.weight && (typeof this.value.weight != 'number' || this.value.weight <= 0)) {
             return false;
         }
 

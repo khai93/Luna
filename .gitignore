@@ -108,7 +108,6 @@ build
 
 *.generated.json
 
-# Yarn 2
 .yarn/*
 !.yarn/cache
 !.yarn/patches
