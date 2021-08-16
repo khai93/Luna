@@ -154,7 +154,7 @@ describe("Express Registry Component: Instances Route", () => {
                     last_heartbeat: 0,
                 } as InstanceRaw);
             
-            expect(resp.statusCode).toBe(400);
+            expect(resp.statusCode).toBe(404);
         });
 
         it("PUT /instances/mockFake:0.0.0.0:80 -> errors if requested with instance id that doesn't match body's instance id", async () => {
@@ -195,7 +195,7 @@ describe("Express Registry Component: Instances Route", () => {
             const resp = await request(app)
                 .delete('/instances/mock5:0.0.0.0:80');
             
-            expect(resp.statusCode).toBe(400);
+            expect(resp.statusCode).toBe(404);
         });
     });
 });
